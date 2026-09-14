@@ -46,21 +46,30 @@ The system is built using a microservices architecture to ensure security, scala
 ```bash
 git clone git@github.com:Ammar-1993/WebGuard-AI.git
 cd WebGuard-AI
+```
 
-2. Configure Environment Variables:
-Create a .env file in the root directory of the project and add your secure credentials:
+**2. Configure Environment Variables:**
 
- OPENAI_API_KEY=your_openai_api_key_here
- JWT_SECRET=your_super_secret_jwt_key
+Create a `.env` file in the root directory of the project and add your secure credentials:
+```env
+OPENAI_API_KEY=your_openai_api_key_here
+JWT_SECRET=your_super_secret_jwt_key
+```
 
-3. Build and Run the System:
+**3. Build and Run the System:**
+
 Launch the entire microservices ecosystem with a single Docker command:
+```bash
+docker-compose up --build -d
+```
 
- docker-compose up --build -d
+**4. Access the Services:**
 
-4. Access the Services:
+| Service | URL |
+| :--- | :--- |
+| Frontend Dashboard | [http://localhost:3030](http://localhost:3030) |
+| Backend API Docs (Swagger UI) | [http://localhost:8010/docs](http://localhost:8010/docs) |
 
- Frontend Dashboard: http://localhost:3030
- Backend API Docs (Swagger UI): http://localhost:8010/docs
+---
 
 Developed following Clean Architecture and modern DevOps best practices.

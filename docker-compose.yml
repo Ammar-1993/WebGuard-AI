@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # ==========================================
   # 1. خدمة قاعدة البيانات (Database - Student 4)
@@ -12,6 +10,12 @@ services:
       - "27017:27017" # المنفذ المعتمد: 27017
     volumes:
       - mongodb_data:/data/db # لضمان عدم ضياع البيانات عند إغلاق الحاوية
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     networks:
       - webguard_net
 
@@ -21,10 +25,16 @@ services:
   owasp-zap:
     image: zaproxy/zap-stable:latest
     container_name: webguard-zap-engine
-    # تعديل جوهري: تم تغيير المنفذ الداخلي للمحرك ليكون 8092 ليتوافق مع طلبك
+    restart: unless-stopped
     command: zap.sh -daemon -host 0.0.0.0 -port 8092 -config api.disablekey=true -config api.addrs.any=true
     ports:
       - "8092:8092" # المنفذ المعتمد: 8092
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8092 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     networks:
       - webguard_net
 
@@ -40,10 +50,10 @@ services:
     ports:
       - "8012:8012" # المنفذ المعتمد: 8012
     environment:
-      # تم التصحيح: يجب أن يشير للرقم الجديد 8092 لكي يتمكن بايثون من التحدث مع ZAP
-      - ZAP_URL=http://owasp-zap:8092 
+      - ZAP_URL=http://owasp-zap:8092
     depends_on:
-      - owasp-zap
+      owasp-zap:
+        condition: service_healthy
     networks:
       - webguard_net
 
@@ -59,7 +69,7 @@ services:
     ports:
       - "8011:8011" # المنفذ المعتمد: 8011
     environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY} 
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     networks:
       - webguard_net
 
@@ -76,15 +86,16 @@ services:
       - "8010:8010" # المنفذ المعتمد: 8010
     environment:
       - MONGO_URI=mongodb://mongodb:27017/webguard_db
-      # تم التصحيح: ربط الخادم بالذكاء الاصطناعي عبر المنفذ الجديد 8011
       - AI_SERVICE_URL=http://ai-analyzer:8011
-      # تم التصحيح: ربط الخادم بمحرك الفحص عبر المنفذ الجديد 8012
       - SCANNER_SERVICE_URL=http://security-scanner:8012
       - JWT_SECRET=${JWT_SECRET:-supersecretkey}
     depends_on:
-      - mongodb
-      - ai-analyzer
-      - security-scanner
+      mongodb:
+        condition: service_healthy
+      ai-analyzer:
+        condition: service_started
+      security-scanner:
+        condition: service_started
     networks:
       - webguard_net
 
@@ -100,7 +111,6 @@ services:
     ports:
       - "3030:3030" # المنفذ المعتمد: 3030
     environment:
-      # تم التصحيح: يجب أن تتصل الواجهة بالخادم المركزي عبر منفذه الجديد 8010
       - NEXT_PUBLIC_API_URL=http://localhost:8010
     depends_on:
       - backend-api

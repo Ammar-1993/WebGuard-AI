@@ -1,7 +1,50 @@
+# ═══════════════════════════════════════
+# Dependencies & Caches
+# ═══════════════════════════════════════
 node_modules/
 __pycache__/
-.env
+*.pyc
+*.pyo
 .venv/
 venv/
-*.pyc
+
+# ═══════════════════════════════════════
+# Environment & Secrets
+# ═══════════════════════════════════════
+.env
+.env.local
+.env.production
+.env.*.local
+
+# ═══════════════════════════════════════
+# Next.js Build Output
+# ═══════════════════════════════════════
+.next/
+out/
+build/
+dist/
+
+# ═══════════════════════════════════════
+# IDE & OS Files
+# ═══════════════════════════════════════
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
 .DS_Store
+Thumbs.db
+
+# ═══════════════════════════════════════
+# Docker & Logs
+# ═══════════════════════════════════════
+*.log
+docker-compose.override.yml
+
+# ═══════════════════════════════════════
+# Testing & Coverage
+# ═══════════════════════════════════════
+coverage/
+.coverage
+htmlcov/
+.pytest_cache/
