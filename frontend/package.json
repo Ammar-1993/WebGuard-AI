@@ -1,0 +1,24 @@
+{
+  "name": "webguard-ai-frontend",
+  "version": "1.0.0",
+  "description": "WebGuard AI — واجهة المستخدم الأمامية",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3030",
+    "build": "next build",
+    "start": "next start -p 3030"
+  },
+  "dependencies": {
+    "next": "^16.0.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "axios": "^1.7.0",
+    "recharts": "^2.12.0",
+    "react-icons": "^5.2.0"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0",
+    "postcss": "^8.4.0",
+    "autoprefixer": "^10.4.0"
+  }
+}

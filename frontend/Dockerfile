@@ -18,5 +18,5 @@ COPY . .
 EXPOSE 3030
 
 # أمر تشغيل خادم Next.js في وضع التطوير (Development Mode)
-# هذا يسمح للطلاب بتعديل الكود ورؤية التغييرات مباشرة أثناء المناقشة دون الحاجة لإعادة بناء الحاوية
-CMD ["npm", "run", "dev", "-p", "3030"]
+# المنفذ محدد في package.json scripts: "dev": "next dev -p 3030"
+CMD ["npm", "run", "dev"]

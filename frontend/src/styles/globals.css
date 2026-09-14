@@ -1,0 +1,138 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══════════════════════════════════════════ */
+/*  WebGuard AI — Global Styles               */
+/* ═══════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* ─── الأساس ─── */
+:root {
+  --cyber-green: #10B981;
+  --cyber-blue: #3B82F6;
+  --cyber-purple: #8B5CF6;
+  --cyber-red: #EF4444;
+  --cyber-orange: #F59E0B;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: #020617;
+  color: #E2E8F0;
+}
+
+/* ─── تأثيرات زجاجية (Glassmorphism) ─── */
+.glass-card {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: 16px;
+}
+
+.glass-card:hover {
+  border-color: rgba(99, 102, 241, 0.35);
+  box-shadow: 0 0 30px rgba(99, 102, 241, 0.1);
+}
+
+/* ─── أنيميشن تدرج الخلفية ─── */
+.gradient-bg {
+  background: linear-gradient(135deg, #020617 0%, #0F172A 50%, #1E1B4B 100%);
+  background-size: 200% 200%;
+  animation: gradientShift 8s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ─── شريط التقدم المتحرك ─── */
+.progress-bar {
+  background: linear-gradient(90deg, #6366F1, #8B5CF6, #A78BFA);
+  background-size: 200% 100%;
+  animation: progressShimmer 2s ease infinite;
+  border-radius: 9999px;
+  height: 8px;
+  transition: width 0.5s ease;
+}
+
+@keyframes progressShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ─── تأثير نبض للمؤشر الأمني ─── */
+.score-pulse {
+  animation: scorePulse 2s ease-in-out infinite;
+}
+
+@keyframes scorePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+/* ─── أزرار مخصصة ─── */
+.btn-primary {
+  @apply bg-primary-600 hover:bg-primary-700 text-white font-semibold px-6 py-3 rounded-xl;
+  @apply transition-all duration-300 ease-in-out;
+  @apply shadow-lg hover:shadow-primary-600/25;
+  @apply active:scale-95;
+}
+
+.btn-secondary {
+  @apply bg-transparent border border-primary-500/50 text-primary-300 font-semibold px-6 py-3 rounded-xl;
+  @apply transition-all duration-300 ease-in-out;
+  @apply hover:bg-primary-500/10 hover:border-primary-400;
+}
+
+/* ─── بطاقات الثغرات ─── */
+.vuln-card {
+  @apply glass-card p-5 transition-all duration-300;
+}
+
+.vuln-card.high {
+  border-left: 4px solid #EF4444;
+}
+
+.vuln-card.medium {
+  border-left: 4px solid #F59E0B;
+}
+
+.vuln-card.low {
+  border-left: 4px solid #3B82F6;
+}
+
+.vuln-card.informational {
+  border-left: 4px solid #6B7280;
+}
+
+/* ─── شارات مستوى الخطورة ─── */
+.risk-badge {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider;
+}
+
+.risk-badge.high { @apply bg-red-500/20 text-red-400; }
+.risk-badge.medium { @apply bg-amber-500/20 text-amber-400; }
+.risk-badge.low { @apply bg-blue-500/20 text-blue-400; }
+.risk-badge.informational { @apply bg-gray-500/20 text-gray-400; }
+
+/* ─── Scrollbar مخصص ─── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0F172A;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4F46E5;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #6366F1;
+}
