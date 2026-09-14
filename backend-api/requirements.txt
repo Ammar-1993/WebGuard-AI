@@ -4,3 +4,7 @@ motor>=3.3.0            # للاتصال بقاعدة بيانات MongoDB بش�
 pydantic>=2.4.0         # للتحقق من صحة البيانات
 pydantic-settings>=2.0.0
 python-dotenv>=1.0.0    # لقراءة ملفات المتغيرات البيئية .env
+httpx>=0.25.0           # عميل HTTP غير متزامن للتواصل مع الخدمات الأخرى (Scanner, AI)
+passlib[bcrypt]>=1.7.4  # لتشفير كلمات المرور باستخدام خوارزمية bcrypt
+python-jose[cryptography]>=3.3.0  # لإنشاء والتحقق من JWT tokens
+email-validator>=2.0.0  # للتحقق من صحة عناوين البريد الإلكتروني (EmailStr)
