@@ -26,7 +26,7 @@ services:
     image: zaproxy/zap-stable:latest
     container_name: webguard-zap-engine
     restart: unless-stopped
-    command: zap.sh -daemon -host 0.0.0.0 -port 8092 -config api.disablekey=true -config api.addrs.any=true
+    command: zap.sh -daemon -host 0.0.0.0 -port 8092 -config api.disablekey=true -config api.addrs.addr.name=.* -config api.addrs.addr.regex=true
     ports:
       - "8092:8092" # المنفذ المعتمد: 8092
     healthcheck:
