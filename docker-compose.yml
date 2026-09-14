@@ -1,0 +1,119 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # 1. خدمة قاعدة البيانات (Database - Student 4)
+  # ==========================================
+  mongodb:
+    image: mongo:6.0.10
+    container_name: webguard-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017" # المنفذ المعتمد: 27017
+    volumes:
+      - mongodb_data:/data/db # لضمان عدم ضياع البيانات عند إغلاق الحاوية
+    networks:
+      - webguard_net
+
+  # ==========================================
+  # 2. محرك الفحص الأساسي (OWASP ZAP Engine)
+  # ==========================================
+  owasp-zap:
+    image: zaproxy/zap-stable:latest
+    container_name: webguard-zap-engine
+    # تعديل جوهري: تم تغيير المنفذ الداخلي للمحرك ليكون 8092 ليتوافق مع طلبك
+    command: zap.sh -daemon -host 0.0.0.0 -port 8092 -config api.disablekey=true -config api.addrs.any=true
+    ports:
+      - "8092:8092" # المنفذ المعتمد: 8092
+    networks:
+      - webguard_net
+
+  # ==========================================
+  # 3. خدمة محرك الفحص البرمجي (Scanner API - Student 6)
+  # ==========================================
+  security-scanner:
+    build:
+      context: ./security-scanner
+      dockerfile: Dockerfile
+    container_name: webguard-scanner-api
+    restart: always
+    ports:
+      - "8012:8012" # المنفذ المعتمد: 8012
+    environment:
+      # تم التصحيح: يجب أن يشير للرقم الجديد 8092 لكي يتمكن بايثون من التحدث مع ZAP
+      - ZAP_URL=http://owasp-zap:8092 
+    depends_on:
+      - owasp-zap
+    networks:
+      - webguard_net
+
+  # ==========================================
+  # 4. خدمة تحليل الذكاء الاصطناعي (AI Analyzer API - Student 5)
+  # ==========================================
+  ai-analyzer:
+    build:
+      context: ./ai-analyzer
+      dockerfile: Dockerfile
+    container_name: webguard-ai-api
+    restart: always
+    ports:
+      - "8011:8011" # المنفذ المعتمد: 8011
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY} 
+    networks:
+      - webguard_net
+
+  # ==========================================
+  # 5. الخادم المركزي (Main Backend API - Student 3)
+  # ==========================================
+  backend-api:
+    build:
+      context: ./backend-api
+      dockerfile: Dockerfile
+    container_name: webguard-backend
+    restart: always
+    ports:
+      - "8010:8010" # المنفذ المعتمد: 8010
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/webguard_db
+      # تم التصحيح: ربط الخادم بالذكاء الاصطناعي عبر المنفذ الجديد 8011
+      - AI_SERVICE_URL=http://ai-analyzer:8011
+      # تم التصحيح: ربط الخادم بمحرك الفحص عبر المنفذ الجديد 8012
+      - SCANNER_SERVICE_URL=http://security-scanner:8012
+      - JWT_SECRET=${JWT_SECRET:-supersecretkey}
+    depends_on:
+      - mongodb
+      - ai-analyzer
+      - security-scanner
+    networks:
+      - webguard_net
+
+  # ==========================================
+  # 6. واجهة المستخدم (Frontend UI - Student 1 & 2)
+  # ==========================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: webguard-frontend
+    restart: always
+    ports:
+      - "3030:3030" # المنفذ المعتمد: 3030
+    environment:
+      # تم التصحيح: يجب أن تتصل الواجهة بالخادم المركزي عبر منفذه الجديد 8010
+      - NEXT_PUBLIC_API_URL=http://localhost:8010
+    depends_on:
+      - backend-api
+    networks:
+      - webguard_net
+
+# ==========================================
+# إعدادات الشبكة والتخزين المستديم (Networks & Volumes)
+# ==========================================
+networks:
+  webguard_net:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+    driver: local

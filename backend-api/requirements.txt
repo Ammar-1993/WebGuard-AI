@@ -1,0 +1,6 @@
+fastapi>=0.103.0
+uvicorn>=0.23.0
+motor>=3.3.0            # للاتصال بقاعدة بيانات MongoDB بشكل غير متزامن (Async)
+pydantic>=2.4.0         # للتحقق من صحة البيانات
+pydantic-settings>=2.0.0
+python-dotenv>=1.0.0    # لقراءة ملفات المتغيرات البيئية .env

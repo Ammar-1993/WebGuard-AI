@@ -1,0 +1,5 @@
+fastapi>=0.103.0
+uvicorn>=0.23.0
+zaproxy>=0.2.0          # المكتبة الرسمية للتخاطب مع OWASP ZAP API
+requests>=2.31.0        # لإرسال طلبات فحص أولية للرابط (Sanity Check)
+pydantic>=2.4.0         # للتحقق من أن الروابط المدخلة صحيحة (URL Validation)
