@@ -1,19 +1,19 @@
 /**
- * WebGuard AI — مؤشر الأمان الدائري (Security Score Gauge)
- * يعرض الدرجة (0-100) داخل دائرة متحركة مع التقدير واللون.
+ * WebGuard AI — Security Score Gauge (Circular)
+ * Displays the score (0-100) inside an animated SVG circle with grade and color.
  */
 export default function SecurityGauge({ score, grade, color, label }) {
-  // ─── حساب المسار الدائري (SVG) ───
+  // ─── Calculate SVG circle path ───
   const radius = 70;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (score / 100) * circumference;
 
   return (
     <div className="flex flex-col items-center score-pulse">
-      {/* الدائرة */}
+      {/* Circle */}
       <div className="relative w-48 h-48">
         <svg className="w-48 h-48 transform -rotate-90" viewBox="0 0 160 160">
-          {/* الخلفية */}
+          {/* Background */}
           <circle
             cx="80"
             cy="80"
@@ -22,7 +22,7 @@ export default function SecurityGauge({ score, grade, color, label }) {
             strokeWidth="12"
             fill="transparent"
           />
-          {/* المؤشر المتحرك */}
+          {/* Animated indicator */}
           <circle
             cx="80"
             cy="80"
@@ -40,14 +40,14 @@ export default function SecurityGauge({ score, grade, color, label }) {
           />
         </svg>
 
-        {/* الدرجة في المنتصف */}
+        {/* Score in center */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-4xl font-extrabold text-white">{score}</span>
-          <span className="text-sm text-gray-400">من 100</span>
+          <span className="text-sm text-gray-400">out of 100</span>
         </div>
       </div>
 
-      {/* التقدير */}
+      {/* Grade */}
       <div className="mt-4 text-center">
         <span
           className="text-3xl font-extrabold"

@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 import { getScanStatus, getReportDetail } from '@/utils/api';
 
 /**
- * WebGuard AI — مكوّن تتبع تقدم الفحص
- * يعرض شريط التقدم والرسائل أثناء الفحص ويستعلم عن الحالة كل 3 ثوانٍ.
+ * WebGuard AI — Scan Progress Tracker Component
+ * Displays a progress bar and status messages while polling every 3 seconds.
  */
 export default function ScanProgress({ scanId, targetUrl, onComplete, onError }) {
   const [status, setStatus] = useState('pending');
   const [progress, setProgress] = useState(0);
-  const [message, setMessage] = useState('تم استلام الطلب — في انتظار البدء...');
+  const [message, setMessage] = useState('Request received — waiting to start...');
 
   useEffect(() => {
     if (!scanId) return;
@@ -20,44 +20,42 @@ export default function ScanProgress({ scanId, targetUrl, onComplete, onError })
         setProgress(data.progress || 0);
         setMessage(data.message || '');
 
-        // ─── اكتمل الفحص ───
+        // ─── Scan completed ───
         if (data.status === 'completed') {
           clearInterval(interval);
-          // جلب التقرير الكامل
           try {
             const report = await getReportDetail(data.scan_id);
             onComplete(report);
           } catch {
-            // إذا لم يُعثر على التقرير بـ scan_id، محاولة جلب جميع التقارير
             onComplete({
               scan_id: scanId,
               target_url: targetUrl,
-              security_score: { score: 0, grade: 'N/A', color: '#6B7280', label: 'غير متاح' },
+              security_score: { score: 0, grade: 'N/A', color: '#6B7280', label: 'Unavailable' },
               vulnerabilities: [],
               ai_analysis: [],
-              summary: 'اكتمل الفحص ولكن لم يتم العثور على تفاصيل التقرير.',
+              summary: 'Scan completed but report details could not be retrieved.',
             });
           }
         }
 
-        // ─── فشل الفحص ───
+        // ─── Scan failed ───
         if (data.status === 'failed') {
           clearInterval(interval);
           onError();
         }
       } catch (err) {
-        console.error('خطأ في استعلام الحالة:', err);
+        console.error('Status polling error:', err);
       }
-    }, 3000); // كل 3 ثوانٍ
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [scanId]);
 
   const stages = [
-    { key: 'pending', label: 'استلام الطلب', icon: '📋' },
-    { key: 'scanning', label: 'فحص ZAP', icon: '🔍' },
-    { key: 'analyzing', label: 'تحليل AI', icon: '🧠' },
-    { key: 'completed', label: 'مكتمل', icon: '✅' },
+    { key: 'pending', label: 'Queued', icon: '📋' },
+    { key: 'scanning', label: 'ZAP Scan', icon: '🔍' },
+    { key: 'analyzing', label: 'AI Analysis', icon: '🧠' },
+    { key: 'completed', label: 'Completed', icon: '✅' },
   ];
 
   const currentStageIndex = stages.findIndex(s => s.key === status);
@@ -65,11 +63,11 @@ export default function ScanProgress({ scanId, targetUrl, onComplete, onError })
   return (
     <div className="glass-card p-8 max-w-2xl mx-auto">
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-white mb-2">⏳ جاري الفحص الأمني</h2>
-        <p className="text-gray-400 text-sm" dir="ltr">{targetUrl}</p>
+        <h2 className="text-2xl font-bold text-white mb-2">⏳ Security Scan in Progress</h2>
+        <p className="text-gray-400 text-sm">{targetUrl}</p>
       </div>
 
-      {/* مراحل الفحص */}
+      {/* Scan Stages */}
       <div className="flex items-center justify-between mb-8">
         {stages.map((stage, index) => (
           <div key={stage.key} className="flex items-center">
@@ -94,10 +92,10 @@ export default function ScanProgress({ scanId, targetUrl, onComplete, onError })
         ))}
       </div>
 
-      {/* شريط التقدم */}
+      {/* Progress Bar */}
       <div className="mb-4">
         <div className="flex justify-between text-sm mb-2">
-          <span className="text-gray-400">التقدم</span>
+          <span className="text-gray-400">Progress</span>
           <span className="text-primary-300 font-bold">{progress}%</span>
         </div>
         <div className="w-full bg-gray-800 rounded-full h-3 overflow-hidden">
@@ -108,15 +106,15 @@ export default function ScanProgress({ scanId, targetUrl, onComplete, onError })
         </div>
       </div>
 
-      {/* الرسالة */}
+      {/* Status Message */}
       <div className="text-center">
         <p className="text-gray-300 text-sm">{message}</p>
       </div>
 
-      {/* تحذير */}
+      {/* Warning */}
       <div className="mt-6 bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 text-center">
         <p className="text-amber-400/80 text-xs">
-          💡 الفحص الأمني قد يستغرق عدة دقائق حسب حجم الموقع. لا تغلق هذه الصفحة.
+          💡 The security scan may take several minutes depending on the website size. Please do not close this page.
         </p>
       </div>
     </div>

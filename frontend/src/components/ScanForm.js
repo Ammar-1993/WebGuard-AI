@@ -3,7 +3,7 @@ import { startScan, isAuthenticated } from '@/utils/api';
 import { useRouter } from 'next/router';
 
 /**
- * WebGuard AI — نموذج بدء الفحص الأمني
+ * WebGuard AI — Security Scan Form Component
  */
 export default function ScanForm({ onScanStart }) {
   const router = useRouter();
@@ -15,17 +15,17 @@ export default function ScanForm({ onScanStart }) {
     e.preventDefault();
     setError('');
 
-    // ─── التحقق من تسجيل الدخول ───
+    // ─── Check authentication ───
     if (!isAuthenticated()) {
       router.push('/login');
       return;
     }
 
-    // ─── التحقق من الرابط ───
+    // ─── Validate URL ───
     try {
       new URL(url);
     } catch {
-      setError('الرابط غير صالح — أدخل رابطاً كاملاً يبدأ بـ http:// أو https://');
+      setError('Invalid URL — please enter a full URL starting with http:// or https://');
       return;
     }
 
@@ -34,7 +34,7 @@ export default function ScanForm({ onScanStart }) {
       const data = await startScan(url);
       onScanStart(data);
     } catch (err) {
-      setError(err.response?.data?.detail || 'فشل بدء الفحص — تأكد من أن الخادم يعمل');
+      setError(err.response?.data?.detail || 'Failed to start scan — make sure the server is running');
     } finally {
       setLoading(false);
     }
@@ -43,8 +43,8 @@ export default function ScanForm({ onScanStart }) {
   return (
     <div className="glass-card p-8 max-w-2xl mx-auto">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-white mb-2">🔍 ابدأ فحصاً أمنياً</h2>
-        <p className="text-gray-400">أدخل رابط الموقع المراد فحصه وسيقوم النظام بتحليله تلقائياً</p>
+        <h2 className="text-2xl font-bold text-white mb-2">🔍 Start a Security Scan</h2>
+        <p className="text-gray-400">Enter the target website URL and the system will analyze it automatically</p>
       </div>
 
       {error && (
@@ -61,8 +61,7 @@ export default function ScanForm({ onScanStart }) {
             onChange={(e) => setUrl(e.target.value)}
             placeholder="https://example.com"
             required
-            dir="ltr"
-            className="w-full px-5 py-4 bg-cyber-dark/50 border border-gray-700 rounded-xl text-white text-lg placeholder-gray-500 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+            className="w-full px-5 py-4 pl-12 bg-cyber-dark/50 border border-gray-700 rounded-xl text-white text-lg placeholder-gray-500 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
           />
           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">🌐</span>
         </div>
@@ -78,16 +77,16 @@ export default function ScanForm({ onScanStart }) {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              جاري إرسال الطلب...
+              Submitting request...
             </>
           ) : (
-            <>🚀 ابدأ الفحص الأمني</>
+            <>🚀 Start Security Scan</>
           )}
         </button>
       </form>
 
       <p className="text-xs text-gray-500 text-center mt-4">
-        ⚠️ استخدم هذه الأداة فقط على المواقع التي تملك صلاحية فحصها
+        ⚠️ Only use this tool on websites you have permission to scan
       </p>
     </div>
   );

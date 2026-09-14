@@ -1,7 +1,7 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 /**
- * WebGuard AI — رسم بياني لتوزيع الثغرات حسب الخطورة
+ * WebGuard AI — Vulnerability Distribution Chart (Donut)
  */
 
 const COLORS = {
@@ -11,18 +11,11 @@ const COLORS = {
   Informational: '#6B7280',
 };
 
-const LABELS = {
-  High: 'عالية',
-  Medium: 'متوسطة',
-  Low: 'منخفضة',
-  Informational: 'معلوماتية',
-};
-
 export default function RiskChart({ counts }) {
   const data = Object.entries(counts)
     .filter(([, value]) => value > 0)
     .map(([key, value]) => ({
-      name: LABELS[key] || key,
+      name: key,
       value,
       color: COLORS[key] || '#6B7280',
     }));
@@ -32,7 +25,7 @@ export default function RiskChart({ counts }) {
       <div className="flex items-center justify-center h-48 text-gray-500">
         <div className="text-center">
           <span className="text-4xl block mb-2">✅</span>
-          <p>لم يتم العثور على ثغرات!</p>
+          <p>No vulnerabilities found!</p>
         </div>
       </div>
     );
@@ -66,7 +59,7 @@ export default function RiskChart({ counts }) {
         </PieChart>
       </ResponsiveContainer>
 
-      {/* الأسطورة */}
+      {/* Legend */}
       <div className="flex flex-wrap justify-center gap-3 mt-2">
         {data.map((entry) => (
           <div key={entry.name} className="flex items-center gap-1.5">

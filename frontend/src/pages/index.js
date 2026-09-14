@@ -6,8 +6,8 @@ import ScanProgress from '@/components/ScanProgress';
 import Dashboard from '@/components/Dashboard';
 
 /**
- * WebGuard AI — الصفحة الرئيسية
- * تعرض نموذج الفحص ونتائج الفحص (Dashboard) بعد الاكتمال.
+ * WebGuard AI — Home Page
+ * Displays the scan form and results dashboard after completion.
  */
 export default function Home() {
   const [scanState, setScanState] = useState('idle'); // idle | scanning | completed
@@ -33,8 +33,8 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>WebGuard AI — فاحص الثغرات الأمنية الذكي</title>
-        <meta name="description" content="منصة ذكية لفحص الثغرات الأمنية باستخدام OWASP ZAP والذكاء الاصطناعي" />
+        <title>WebGuard AI — Intelligent Vulnerability Scanner</title>
+        <meta name="description" content="An intelligent platform for web vulnerability scanning powered by OWASP ZAP and AI analysis" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -43,14 +43,14 @@ export default function Home() {
         <Navbar />
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* ─── حالة الخمول: نموذج الفحص ─── */}
+          {/* ─── Idle State: Scan Form ─── */}
           {scanState === 'idle' && (
             <div className="space-y-12">
               {/* Hero Section */}
               <div className="text-center py-16">
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-500/10 border border-primary-500/20 mb-6">
                   <span className="w-2 h-2 rounded-full bg-cyber-green animate-pulse"></span>
-                  <span className="text-sm text-primary-300 font-medium">نظام جاهز للفحص</span>
+                  <span className="text-sm text-primary-300 font-medium">System Ready to Scan</span>
                 </div>
                 <h1 className="text-5xl md:text-6xl font-extrabold mb-6">
                   <span className="bg-gradient-to-r from-primary-400 via-cyber-purple to-cyber-blue bg-clip-text text-transparent">
@@ -58,39 +58,39 @@ export default function Home() {
                   </span>
                 </h1>
                 <p className="text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
-                  منصة ذكية لفحص الثغرات الأمنية — تجمع بين قوة محرك
+                  An intelligent vulnerability scanning platform — combining the power of
                   <span className="text-cyber-green font-semibold"> OWASP ZAP </span>
-                  لاكتشاف الثغرات والذكاء الاصطناعي
-                  <span className="text-cyber-purple font-semibold"> (AI) </span>
-                  لتحليلها وتبسيطها
+                  for vulnerability discovery with
+                  <span className="text-cyber-purple font-semibold"> Artificial Intelligence </span>
+                  for analysis and simplification
                 </p>
               </div>
 
-              {/* نموذج الفحص */}
+              {/* Scan Form */}
               <ScanForm onScanStart={handleScanStart} />
 
-              {/* المميزات */}
+              {/* Features */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
                 <div className="glass-card p-6 text-center">
                   <div className="text-4xl mb-4">🔍</div>
-                  <h3 className="text-lg font-bold text-white mb-2">فحص شامل</h3>
-                  <p className="text-gray-400 text-sm">فحص أمني متقدم يعتمد على معايير OWASP Top 10 العالمية</p>
+                  <h3 className="text-lg font-bold text-white mb-2">Comprehensive Scanning</h3>
+                  <p className="text-gray-400 text-sm">Advanced security scan based on OWASP Top 10 global standards</p>
                 </div>
                 <div className="glass-card p-6 text-center">
                   <div className="text-4xl mb-4">🧠</div>
-                  <h3 className="text-lg font-bold text-white mb-2">تحليل ذكي</h3>
-                  <p className="text-gray-400 text-sm">ذكاء اصطناعي يحلل النتائج ويستبعد الإنذارات الخاطئة</p>
+                  <h3 className="text-lg font-bold text-white mb-2">AI-Powered Analysis</h3>
+                  <p className="text-gray-400 text-sm">Artificial intelligence analyzes results and eliminates false positives</p>
                 </div>
                 <div className="glass-card p-6 text-center">
                   <div className="text-4xl mb-4">💊</div>
-                  <h3 className="text-lg font-bold text-white mb-2">أكواد إصلاح</h3>
-                  <p className="text-gray-400 text-sm">توصيات وأكواد إصلاح جاهزة لتطبيقها فوراً</p>
+                  <h3 className="text-lg font-bold text-white mb-2">Remediation Code</h3>
+                  <p className="text-gray-400 text-sm">Ready-to-use recommendations and fix code for immediate application</p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* ─── حالة الفحص: شريط التقدم ─── */}
+          {/* ─── Scanning State: Progress Bar ─── */}
           {scanState === 'scanning' && scanData && (
             <ScanProgress
               scanId={scanData.scan_id}
@@ -100,7 +100,7 @@ export default function Home() {
             />
           )}
 
-          {/* ─── حالة الاكتمال: لوحة التحكم ─── */}
+          {/* ─── Completed State: Dashboard ─── */}
           {scanState === 'completed' && reportData && (
             <Dashboard
               report={reportData}
@@ -111,7 +111,7 @@ export default function Home() {
 
         {/* Footer */}
         <footer className="text-center py-8 text-gray-500 text-sm border-t border-gray-800/50">
-          <p>© 2024 WebGuard AI — مشروع تخرج جامعي</p>
+          <p>© 2024 WebGuard AI — University Graduation Project</p>
         </footer>
       </div>
     </>

@@ -1,14 +1,14 @@
 /**
  * WebGuard AI — API Client (Axios)
  * ===================================
- * عميل HTTP مُهيّأ مسبقاً للتواصل مع الخادم المركزي (Backend API).
+ * Pre-configured HTTP client for communicating with the Backend API.
  */
 
 import axios from 'axios';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8010';
 
-// ─── إنشاء عميل Axios ───
+// ─── Create Axios instance ───
 const api = axios.create({
   baseURL: API_URL,
   headers: {
@@ -16,7 +16,7 @@ const api = axios.create({
   },
 });
 
-// ─── Interceptor: إضافة JWT Token تلقائياً ───
+// ─── Interceptor: Auto-attach JWT Token ───
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('webguard_token');
@@ -27,12 +27,12 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// ─── Interceptor: معالجة أخطاء الاستجابة ───
+// ─── Interceptor: Handle response errors ───
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // إذا انتهت صلاحية الـ Token → إعادة توجيه لتسجيل الدخول
+      // Token expired → redirect to login
       if (typeof window !== 'undefined') {
         localStorage.removeItem('webguard_token');
         localStorage.removeItem('webguard_user');
@@ -45,7 +45,7 @@ api.interceptors.response.use(
 
 
 // ═══════════════════════════════════════════
-//  دوال المصادقة (Auth)
+//  Auth Functions
 // ═══════════════════════════════════════════
 
 export async function register(username, email, password) {
@@ -83,7 +83,7 @@ export function isAuthenticated() {
 
 
 // ═══════════════════════════════════════════
-//  دوال الفحص الأمني (Scan)
+//  Scan Functions
 // ═══════════════════════════════════════════
 
 export async function startScan(targetUrl) {
@@ -98,7 +98,7 @@ export async function getScanStatus(scanId) {
 
 
 // ═══════════════════════════════════════════
-//  دوال التقارير (Reports)
+//  Report Functions
 // ═══════════════════════════════════════════
 
 export async function getReports() {
@@ -117,7 +117,7 @@ export async function deleteReport(reportId) {
 
 
 // ═══════════════════════════════════════════
-//  فحص صحة النظام
+//  System Health Check
 // ═══════════════════════════════════════════
 
 export async function getHealthStatus() {

@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { getCurrentUser, logout, isAuthenticated } from '@/utils/api';
 
 /**
- * WebGuard AI — شريط التنقل العلوي (Navbar)
+ * WebGuard AI — Top Navigation Bar (Navbar)
  */
 export default function Navbar() {
   const [user, setUser] = useState(null);
@@ -26,18 +26,18 @@ export default function Navbar() {
             </span>
           </Link>
 
-          {/* القائمة */}
+          {/* Menu */}
           <div className="flex items-center gap-4">
             {user ? (
               <>
                 <span className="text-gray-400 text-sm hidden sm:block">
-                  مرحباً، <span className="text-primary-300 font-medium">{user.username}</span>
+                  Welcome, <span className="text-primary-300 font-medium">{user.username}</span>
                 </span>
                 <button
                   onClick={logout}
                   className="text-gray-400 hover:text-red-400 text-sm font-medium transition-colors px-3 py-2 rounded-lg hover:bg-red-500/10"
                 >
-                  تسجيل خروج
+                  Sign Out
                 </button>
               </>
             ) : (
@@ -45,7 +45,7 @@ export default function Navbar() {
                 href="/login"
                 className="btn-secondary text-sm py-2 px-4"
               >
-                🔐 تسجيل الدخول
+                🔐 Sign In
               </Link>
             )}
           </div>
