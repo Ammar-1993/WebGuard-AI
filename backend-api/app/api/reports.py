@@ -69,7 +69,10 @@ async def get_report_detail(
     try:
         report = await reports.find_one({"_id": ObjectId(report_id)})
     except Exception:
-        # ─── محاولة البحث بـ scan_id إذا لم يكن ObjectId ───
+        report = None
+
+    if not report:
+        # ─── محاولة البحث بـ scan_id ───
         report = await reports.find_one({"scan_id": report_id})
 
     if not report:
@@ -101,6 +104,9 @@ async def delete_report(
     try:
         result = await reports.delete_one({"_id": ObjectId(report_id)})
     except Exception:
+        result = None
+
+    if not result or result.deleted_count == 0:
         result = await reports.delete_one({"scan_id": report_id})
 
     if result.deleted_count == 0:
