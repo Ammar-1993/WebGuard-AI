@@ -46,23 +46,23 @@ async def analyze_vulnerabilities(raw_alerts: list) -> dict:
             else:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f"فشل تحليل الذكاء الاصطناعي: {response.text}",
+                    detail=f"AI analysis failed: {response.text}",
                 )
 
     except httpx.ConnectError:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="خدمة الذكاء الاصطناعي غير متاحة حالياً. تأكد من تشغيل حاوية AI Analyzer.",
+            detail="AI Analyzer service is currently unavailable. Ensure the container is running.",
         )
     except httpx.TimeoutException:
         raise HTTPException(
             status_code=status.HTTP_504_GATEWAY_TIMEOUT,
-            detail="انتهت مهلة تحليل الذكاء الاصطناعي. حاول مرة أخرى.",
+            detail="AI analysis timed out. Please try again.",
         )
     except httpx.HTTPError as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"خطأ في الاتصال بخدمة الذكاء الاصطناعي: {str(e)}",
+            detail=f"Error connecting to AI service: {str(e)}",
         )
 
 

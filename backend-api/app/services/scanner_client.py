@@ -44,23 +44,23 @@ async def start_scan(target_url: str) -> dict:
             else:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f"فشل الفحص الأمني: {response.text}",
+                    detail=f"Security scan failed: {response.text}",
                 )
 
     except httpx.ConnectError:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="خدمة الفحص الأمني غير متاحة حالياً. تأكد من تشغيل حاوية Security Scanner.",
+            detail="Security Scanner service is currently unavailable. Ensure the container is running.",
         )
     except httpx.TimeoutException:
         raise HTTPException(
             status_code=status.HTTP_504_GATEWAY_TIMEOUT,
-            detail="انتهت مهلة الفحص الأمني. قد يكون الموقع المُفحص كبيراً جداً.",
+            detail="Security scan timed out. The target site might be too large.",
         )
     except httpx.HTTPError as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"خطأ في الاتصال بخدمة الفحص: {str(e)}",
+            detail=f"Error connecting to Scanner service: {str(e)}",
         )
 
 

@@ -30,7 +30,7 @@ from langchain_core.messages import SystemMessage, HumanMessage
 app = FastAPI(
     title="WebGuard AI — AI Analyzer",
     version="1.0.0",
-    description="خدمة تحليل الثغرات بالذكاء الاصطناعي — LangChain + OpenAI",
+    description="AI Vulnerability Analysis Service — LangChain + OpenAI",
 )
 
 # ─── قراءة مفتاح OpenAI من متغيرات البيئة ───
@@ -86,7 +86,7 @@ async def _analyze_with_ai(alerts: List[dict]) -> dict:
     if not OPENAI_API_KEY:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="مفتاح OpenAI API غير مُعرّف. أضفه في ملف .env",
+            detail="OpenAI API key is undefined. Add it to .env",
         )
 
     # ─── إنشاء نموذج LangChain ───
@@ -141,16 +141,16 @@ async def _analyze_with_ai(alerts: List[dict]) -> dict:
         return result
 
     except json.JSONDecodeError as e:
-        print(f"⚠️ فشل تحليل استجابة AI كـ JSON: {e}")
-        print(f"   الاستجابة الخام: {response_text[:500]}")
+        print(f"⚠️ Failed to parse AI response as JSON: {e}")
+        print(f"   Raw response: {response_text[:500]}")
         # ─── إرجاع تحليل افتراضي في حالة فشل التحليل ───
         return _generate_fallback_analysis(alerts)
 
     except Exception as e:
-        print(f"❌ خطأ في استدعاء OpenAI: {e}")
+        print(f"❌ Error calling OpenAI: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"فشل تحليل الذكاء الاصطناعي: {str(e)}",
+            detail=f"AI analysis failed: {str(e)}",
         )
 
 
@@ -166,16 +166,16 @@ def _generate_fallback_analysis(alerts: List[dict]) -> dict:
             "risk": alert.get("risk", "Informational"),
             "is_false_positive": False,
             "false_positive_reason": "",
-            "simplified_description": alert.get("description", "ثغرة أمنية تم اكتشافها بواسطة محرك ZAP.")[:200],
-            "impact": "يُرجى مراجعة التفاصيل التقنية لتقييم التأثير.",
-            "remediation_steps": [alert.get("solution", "راجع الوثائق الأمنية ذات الصلة.")],
+            "simplified_description": alert.get("description", "Security vulnerability discovered by ZAP engine.")[:200],
+            "impact": "Please review technical details to evaluate impact.",
+            "remediation_steps": [alert.get("solution", "Review related security documentation.")],
             "remediation_code": "",
             "code_language": "",
         })
 
     return {
         "analysis": analysis,
-        "summary": f"تم اكتشاف {len(alerts)} تنبيه أمني. يُرجى مراجعة كل ثغرة على حدة.",
+        "summary": f"Discovered {len(alerts)} security alerts. Please review each vulnerability individually.",
     }
 
 
@@ -185,8 +185,8 @@ def _generate_fallback_analysis(alerts: List[dict]) -> dict:
 
 @app.post(
     "/api/analyze",
-    summary="تحليل الثغرات بالذكاء الاصطناعي",
-    description="يستقبل نتائج ZAP الخام ويُعيد تحليلاً مبسّطاً مع أكواد إصلاح.",
+    summary="Analyze Vulnerabilities with AI",
+    description="Receives raw ZAP results and returns simplified analysis with remediation codes.",
 )
 async def analyze_vulnerabilities(request: AnalyzeRequest):
     """
@@ -199,19 +199,19 @@ async def analyze_vulnerabilities(request: AnalyzeRequest):
     if not request.alerts:
         return {
             "analysis": [],
-            "summary": "لم يتم العثور على أي ثغرات أمنية. الموقع يبدو آمناً! ✅",
+            "summary": "No security vulnerabilities found. The site appears secure! ✅",
         }
 
-    print(f"🧠 بدء تحليل {len(request.alerts)} تنبيه أمني بالذكاء الاصطناعي...")
+    print(f"🧠 Starting AI analysis of {len(request.alerts)} security alerts...")
     result = await _analyze_with_ai(request.alerts)
-    print(f"✅ اكتمل التحليل — {len(result.get('analysis', []))} ثغرة مُحلّلة")
+    print(f"✅ Analysis completed — {len(result.get('analysis', []))} vulnerabilities analyzed")
 
     return result
 
 
 @app.get(
     "/health",
-    summary="فحص صحة الخدمة",
+    summary="Health Check",
 )
 async def health():
     """يتحقق من جاهزية خدمة الذكاء الاصطناعي."""
@@ -224,10 +224,10 @@ async def health():
     }
 
 
-@app.get("/", summary="الصفحة الرئيسية")
+@app.get("/", summary="Home Page")
 async def root():
     return {
         "service": "WebGuard AI — AI Analyzer",
         "status": "running",
-        "description": "خدمة تحليل الثغرات بالذكاء الاصطناعي (LangChain + OpenAI)",
+        "description": "AI Vulnerability Analyzer Service (LangChain + OpenAI)",
     }

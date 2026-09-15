@@ -83,7 +83,7 @@ def _wait_for_spider(target: str, max_wait: int = 120) -> int:
     Returns:
         عدد الروابط المكتشفة
     """
-    print(f"🕷️ بدء Spider على: {target}")
+    print(f"🕷️ Starting Spider on: {target}")
     scan_id = zap.spider.scan(target)
     elapsed = 0
 
@@ -93,12 +93,12 @@ def _wait_for_spider(target: str, max_wait: int = 120) -> int:
         progress = zap.spider.status(scan_id)
         print(f"   Spider progress: {progress}%")
         if elapsed > max_wait:
-            print("⚠️ تجاوز الوقت المحدد لـ Spider")
+            print("⚠️ Spider timeout exceeded")
             zap.spider.stop(scan_id)
             break
 
     results = zap.spider.results(scan_id)
-    print(f"✅ Spider اكتمل — تم اكتشاف {len(results)} رابط")
+    print(f"✅ Spider completed — discovered {len(results)} URLs")
     return len(results)
 
 
@@ -107,7 +107,7 @@ def _wait_for_active_scan(target: str, max_wait: int = 300) -> None:
     يُشغّل Active Scan (فحص الثغرات الفعلي) وينتظر اكتماله.
     هذا هو الجزء الذي يكتشف فيه ZAP الثغرات الأمنية.
     """
-    print(f"🔍 بدء Active Scan على: {target}")
+    print(f"🔍 Starting Active Scan on: {target}")
     scan_id = zap.ascan.scan(target)
     elapsed = 0
 
@@ -117,11 +117,11 @@ def _wait_for_active_scan(target: str, max_wait: int = 300) -> None:
         progress = zap.ascan.status(scan_id)
         print(f"   Active Scan progress: {progress}%")
         if elapsed > max_wait:
-            print("⚠️ تجاوز الوقت المحدد لـ Active Scan")
+            print("⚠️ Active Scan timeout exceeded")
             zap.ascan.stop(scan_id)
             break
 
-    print("✅ Active Scan اكتمل")
+    print("✅ Active Scan completed")
 
 
 # ═══════════════════════════════════════════
@@ -148,12 +148,12 @@ async def run_scan(scan_request: ScanRequest):
     if not _validate_url_reachable(target):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"الرابط غير قابل للوصول: {target}",
+            detail=f"URL is unreachable: {target}",
         )
 
     try:
         # ─── 2. فتح الرابط في ZAP ───
-        print(f"🌐 فتح الرابط في ZAP: {target}")
+        print(f"🌐 Opening URL in ZAP: {target}")
         zap.urlopen(target)
         time.sleep(2)  # انتظار قصير ليُعالج ZAP الرابط
 
@@ -182,7 +182,7 @@ async def run_scan(scan_request: ScanRequest):
                 "reference": alert.get("reference", ""),
             })
 
-        print(f"📊 النتائج: {len(cleaned_alerts)} تنبيه أمني مكتشف")
+        print(f"📊 Results: {len(cleaned_alerts)} security alerts discovered")
 
         return {
             "status": "completed",
@@ -197,7 +197,7 @@ async def run_scan(scan_request: ScanRequest):
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"خطأ أثناء الفحص: {str(e)}. تأكد من أن محرك ZAP يعمل.",
+            detail=f"Error during scan: {str(e)}. Ensure ZAP engine is running.",
         )
 
 
@@ -219,7 +219,7 @@ async def health():
         return {
             "status": "degraded",
             "service": "Security Scanner",
-            "error": f"ZAP غير متاح: {str(e)}",
+            "error": f"ZAP is unavailable: {str(e)}",
             "zap_url": ZAP_URL,
         }
 
@@ -229,5 +229,5 @@ async def root():
     return {
         "service": "WebGuard AI — Security Scanner",
         "status": "running",
-        "description": "خدمة محرك الفحص الأمني (OWASP ZAP Wrapper)",
+        "description": "Security Scanner Engine Service (OWASP ZAP Wrapper)",
     }

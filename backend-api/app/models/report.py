@@ -33,51 +33,51 @@ class SecurityGrade(str, Enum):
 
 class Vulnerability(BaseModel):
     """ثغرة أمنية فردية كما يُبلّغ عنها محرك OWASP ZAP."""
-    name: str = Field(..., description="اسم الثغرة الأمنية")
-    risk: RiskLevel = Field(..., description="مستوى الخطورة")
-    confidence: str = Field(default="Medium", description="مستوى الثقة في النتيجة")
-    description: str = Field(default="", description="الوصف التقني للثغرة")
-    solution: str = Field(default="", description="الحل المقترح من ZAP")
-    url: str = Field(default="", description="الرابط المصاب بالثغرة")
-    cweid: str = Field(default="", description="معرّف CWE الدولي")
-    wascid: str = Field(default="", description="معرّف WASC")
-    evidence: str = Field(default="", description="الدليل/البرهان على وجود الثغرة")
-    reference: str = Field(default="", description="مراجع إضافية")
+    name: str = Field(..., description="Vulnerability name")
+    risk: RiskLevel = Field(..., description="Risk level")
+    confidence: str = Field(default="Medium", description="Confidence level in the result")
+    description: str = Field(default="", description="Technical description of the vulnerability")
+    solution: str = Field(default="", description="Proposed solution by ZAP")
+    url: str = Field(default="", description="URL affected by the vulnerability")
+    cweid: str = Field(default="", description="International CWE ID")
+    wascid: str = Field(default="", description="WASC ID")
+    evidence: str = Field(default="", description="Evidence of the vulnerability")
+    reference: str = Field(default="", description="Additional references")
 
 
 # ─── تحليل الذكاء الاصطناعي لثغرة واحدة ───
 
 class AIVulnerabilityAnalysis(BaseModel):
     """تحليل الذكاء الاصطناعي لثغرة أمنية واحدة."""
-    original_name: str = Field(..., description="اسم الثغرة الأصلي من ZAP")
-    risk: RiskLevel = Field(..., description="مستوى الخطورة")
+    original_name: str = Field(..., description="Original vulnerability name from ZAP")
+    risk: RiskLevel = Field(..., description="Risk level")
     is_false_positive: bool = Field(
         default=False,
-        description="هل هي إنذار خاطئ (False Positive)؟",
+        description="Is it a false positive?",
     )
     false_positive_reason: str = Field(
         default="",
-        description="سبب اعتبارها إنذاراً خاطئاً (إن وُجد)",
+        description="Reason for being a false positive (if any)",
     )
     simplified_description: str = Field(
         ...,
-        description="وصف مبسّط ومفهوم للثغرة (بلغة المطوّر)",
+        description="Simplified and understandable description of the vulnerability (developer language)",
     )
     impact: str = Field(
         default="",
-        description="التأثير المحتمل لهذه الثغرة على النظام",
+        description="Potential impact of this vulnerability on the system",
     )
     remediation_steps: List[str] = Field(
         default_factory=list,
-        description="خطوات الإصلاح المقترحة",
+        description="Proposed remediation steps",
     )
     remediation_code: str = Field(
         default="",
-        description="كود الإصلاح الجاهز للتطبيق",
+        description="Ready-to-apply remediation code",
     )
     code_language: str = Field(
         default="",
-        description="لغة كود الإصلاح (Python, JavaScript, PHP, إلخ)",
+        description="Language of remediation code (Python, JavaScript, PHP, etc.)",
     )
 
 
@@ -92,14 +92,14 @@ class SecurityScore(BaseModel):
         ...,
         ge=0,
         le=100,
-        description="الدرجة الرقمية (0-100)",
+        description="Numerical score (0-100)",
     )
-    grade: SecurityGrade = Field(..., description="التقدير الحرفي (A+ إلى F)")
-    color: str = Field(..., description="لون المؤشر (#hex)")
-    label: str = Field(..., description="وصف نصي مختصر للحالة")
+    grade: SecurityGrade = Field(..., description="Letter grade (A+ to F)")
+    color: str = Field(..., description="Score color (#hex)")
+    label: str = Field(..., description="Brief text description of the status")
     breakdown: dict = Field(
         default_factory=dict,
-        description="تفصيل الخصومات حسب مستوى الخطورة",
+        description="Breakdown of deductions by risk level",
     )
 
     class Config:
@@ -108,7 +108,7 @@ class SecurityScore(BaseModel):
                 "score": 72,
                 "grade": "B",
                 "color": "#F59E0B",
-                "label": "جيد — يوجد مجال للتحسين",
+                "label": "Good — Room for improvement",
                 "breakdown": {
                     "high": {"count": 1, "deduction": -15},
                     "medium": {"count": 2, "deduction": -16},
@@ -123,32 +123,32 @@ class SecurityScore(BaseModel):
 
 class FullReport(BaseModel):
     """التقرير الأمني الكامل — يجمع نتائج ZAP + تحليل AI + مؤشر الأمان."""
-    scan_id: str = Field(..., description="المُعرّف الفريد للفحص")
-    target_url: str = Field(..., description="الرابط المُفحص")
+    scan_id: str = Field(..., description="Unique identifier for the scan")
+    target_url: str = Field(..., description="Target URL")
     scan_date: datetime = Field(
         default_factory=datetime.utcnow,
-        description="تاريخ ووقت الفحص",
+        description="Date and time of the scan",
     )
-    security_score: SecurityScore = Field(..., description="مؤشر الأمان المحسوب")
+    security_score: SecurityScore = Field(..., description="Calculated security score")
     total_vulnerabilities: int = Field(
         default=0,
-        description="العدد الإجمالي للثغرات المكتشفة",
+        description="Total number of discovered vulnerabilities",
     )
     false_positives_count: int = Field(
         default=0,
-        description="عدد الإنذارات الخاطئة المُستبعدة",
+        description="Number of excluded false positives",
     )
     vulnerabilities: List[Vulnerability] = Field(
         default_factory=list,
-        description="قائمة الثغرات الخام من ZAP",
+        description="List of raw vulnerabilities from ZAP",
     )
     ai_analysis: List[AIVulnerabilityAnalysis] = Field(
         default_factory=list,
-        description="تحليل الذكاء الاصطناعي لكل ثغرة",
+        description="AI analysis for each vulnerability",
     )
     summary: str = Field(
         default="",
-        description="ملخص عام للتقرير من الذكاء الاصطناعي",
+        description="Overall report summary from AI",
     )
 
 

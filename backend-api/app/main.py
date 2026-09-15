@@ -30,14 +30,14 @@ async def lifespan(app: FastAPI):
     - عند الإغلاق: يُغلق الاتصال بشكل نظيف
     """
     # ─── Startup ───
-    print("🚀 جاري تشغيل WebGuard AI Backend...")
+    print("🚀 Starting WebGuard AI Backend...")
     await connect_db()
-    print("✅ الخادم المركزي جاهز للعمل")
+    print("✅ Backend server is ready to work")
     yield
     # ─── Shutdown ───
-    print("🛑 جاري إيقاف الخادم...")
+    print("🛑 Stopping server...")
     await close_db()
-    print("👋 تم إيقاف الخادم بنجاح")
+    print("👋 Server stopped successfully")
 
 
 # ═══════════════════════════════════════════
@@ -50,10 +50,9 @@ app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     description=(
-        "🛡️ منصة WebGuard AI — نظام ذكي لفحص الثغرات الأمنية\n\n"
-        "يجمع بين قوة محرك OWASP ZAP لاكتشاف الثغرات "
-        "والذكاء الاصطناعي (LangChain + OpenAI) لتحليل النتائج وتبسيطها.\n\n"
-        "**مشروع تخرج — جامعة المعرفة**"
+        "🛡️ WebGuard AI Platform — Smart vulnerability scanning system\n\n"
+        "Combines OWASP ZAP for discovery with AI (LangChain + OpenAI) for analysis.\n\n"
+        "**Graduation Project — University of Bisha**"
     ),
     docs_url="/docs",
     redoc_url="/redoc",
@@ -102,7 +101,7 @@ async def root():
         "service": settings.APP_NAME,
         "version": settings.APP_VERSION,
         "status": "running",
-        "message": "مرحباً بك في WebGuard AI API 🛡️",
+        "message": "Welcome to WebGuard AI API 🛡️",
         "docs": "/docs",
     }
 

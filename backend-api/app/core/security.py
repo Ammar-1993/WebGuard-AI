@@ -88,7 +88,7 @@ def decode_access_token(token: str) -> dict:
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token غير صالح أو منتهي الصلاحية",
+            detail="Token is invalid or expired",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -114,6 +114,6 @@ async def get_current_user(
     if user_id is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="لم يتم العثور على بيانات المستخدم في الـ Token",
+            detail="User data not found in Token",
         )
     return {"user_id": user_id, "email": payload.get("email", "")}

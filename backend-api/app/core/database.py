@@ -25,9 +25,9 @@ async def connect_db():
     # التحقق من نجاح الاتصال
     try:
         await client.admin.command("ping")
-        print("✅ تم الاتصال بقاعدة البيانات MongoDB بنجاح")
+        print("✅ Connected to MongoDB successfully")
     except Exception as e:
-        print(f"❌ فشل الاتصال بقاعدة البيانات: {e}")
+        print(f"❌ Failed to connect to database: {e}")
         raise
 
 
@@ -39,7 +39,7 @@ async def close_db():
     global client
     if client:
         client.close()
-        print("🔌 تم إغلاق الاتصال بقاعدة البيانات")
+        print("🔌 Database connection closed")
 
 
 def get_database():

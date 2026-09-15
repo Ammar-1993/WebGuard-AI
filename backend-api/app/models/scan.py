@@ -24,7 +24,7 @@ class ScanRequest(BaseModel):
     """نموذج طلب فحص جديد — يُرسله المستخدم."""
     target_url: HttpUrl = Field(
         ...,
-        description="رابط الموقع المراد فحصه أمنياً",
+        description="Target URL to scan",
         examples=["https://example.com"],
     )
 
@@ -38,23 +38,23 @@ class ScanRequest(BaseModel):
 
 class ScanStatusResponse(BaseModel):
     """نموذج حالة الفحص — للاستعلام عن تقدم الفحص."""
-    scan_id: str = Field(..., description="المُعرّف الفريد للفحص")
-    status: ScanStatus = Field(..., description="الحالة الحالية للفحص")
-    target_url: str = Field(..., description="الرابط المُفحص")
+    scan_id: str = Field(..., description="Unique identifier for the scan")
+    status: ScanStatus = Field(..., description="Current status of the scan")
+    target_url: str = Field(..., description="Target URL")
     progress: int = Field(
         default=0,
         ge=0,
         le=100,
-        description="نسبة التقدم (0-100%)",
+        description="Progress percentage (0-100%)",
     )
-    message: str = Field(default="", description="رسالة توضيحية عن الحالة")
+    message: str = Field(default="", description="Status message")
     created_at: datetime = Field(
         default_factory=datetime.utcnow,
-        description="وقت إنشاء الفحص",
+        description="Creation time of the scan",
     )
     completed_at: Optional[datetime] = Field(
         default=None,
-        description="وقت اكتمال الفحص",
+        description="Completion time of the scan",
     )
 
     class Config:
@@ -64,7 +64,7 @@ class ScanStatusResponse(BaseModel):
                 "status": "scanning",
                 "target_url": "https://example.com",
                 "progress": 45,
-                "message": "جاري فحص الصفحات المكتشفة...",
+                "message": "Scanning discovered pages...",
                 "created_at": "2024-01-15T10:30:00",
                 "completed_at": None,
             }

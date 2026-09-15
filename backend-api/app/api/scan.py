@@ -17,7 +17,7 @@ from app.models.scan import ScanRequest, ScanStatus, ScanStatusResponse
 from app.services import scanner_client, ai_client
 from app.services.scoring import calculate_security_score
 
-router = APIRouter(prefix="/api/scan", tags=["🔍 الفحص الأمني"])
+router = APIRouter(prefix="/api/scan", tags=["🔍 Security Scan"])
 
 
 async def _run_scan_pipeline(scan_id: str, target_url: str):
@@ -43,7 +43,7 @@ async def _run_scan_pipeline(scan_id: str, target_url: str):
             {"$set": {
                 "status": ScanStatus.SCANNING,
                 "progress": 10,
-                "message": "جاري إرسال الرابط لمحرك الفحص OWASP ZAP...",
+                "message": "Sending URL to OWASP ZAP scanning engine...",
             }},
         )
 
@@ -54,7 +54,7 @@ async def _run_scan_pipeline(scan_id: str, target_url: str):
             {"_id": ObjectId(scan_id)},
             {"$set": {
                 "progress": 50,
-                "message": f"اكتمل الفحص — تم اكتشاف {len(raw_alerts)} تنبيه. جاري تحليل الذكاء الاصطناعي...",
+                "message": f"Scan completed — discovered {len(raw_alerts)} alerts. Starting AI analysis...",
             }},
         )
 
@@ -72,7 +72,7 @@ async def _run_scan_pipeline(scan_id: str, target_url: str):
             {"_id": ObjectId(scan_id)},
             {"$set": {
                 "progress": 85,
-                "message": "اكتمل التحليل — جاري حساب مؤشر الأمان...",
+                "message": "Analysis completed — calculating security score...",
             }},
         )
 
@@ -110,7 +110,7 @@ async def _run_scan_pipeline(scan_id: str, target_url: str):
             {"$set": {
                 "status": ScanStatus.COMPLETED,
                 "progress": 100,
-                "message": "اكتمل الفحص والتحليل بنجاح ✅",
+                "message": "Scan and analysis completed successfully ✅",
                 "completed_at": datetime.now(timezone.utc),
                 "score": security_score.score,
                 "grade": security_score.grade,
@@ -123,7 +123,7 @@ async def _run_scan_pipeline(scan_id: str, target_url: str):
             {"_id": ObjectId(scan_id)},
             {"$set": {
                 "status": ScanStatus.FAILED,
-                "message": f"فشل الفحص: {str(e)}",
+                "message": f"Scan failed: {str(e)}",
                 "completed_at": datetime.now(timezone.utc),
             }},
         )
@@ -133,8 +133,8 @@ async def _run_scan_pipeline(scan_id: str, target_url: str):
     "",
     response_model=ScanStatusResponse,
     status_code=status.HTTP_202_ACCEPTED,
-    summary="بدء فحص أمني جديد",
-    description="يستقبل رابط الموقع ويبدأ خط أنابيب الفحص في الخلفية.",
+    summary="Start new security scan",
+    description="Receives target URL and starts scan pipeline in the background.",
 )
 async def start_new_scan(
     scan_request: ScanRequest,
@@ -149,7 +149,7 @@ async def start_new_scan(
         "target_url": str(scan_request.target_url),
         "status": ScanStatus.PENDING,
         "progress": 0,
-        "message": "تم استلام الطلب — في انتظار البدء...",
+        "message": "Request received — waiting to start...",
         "user_id": current_user["user_id"],
         "created_at": datetime.now(timezone.utc),
         "completed_at": None,
@@ -169,7 +169,7 @@ async def start_new_scan(
         status=ScanStatus.PENDING,
         target_url=str(scan_request.target_url),
         progress=0,
-        message="تم استلام الطلب — سيبدأ الفحص قريباً...",
+        message="Request received — scan will start shortly...",
         created_at=scan_doc["created_at"],
     )
 
@@ -177,8 +177,8 @@ async def start_new_scan(
 @router.get(
     "/{scan_id}",
     response_model=ScanStatusResponse,
-    summary="استعلام عن حالة فحص",
-    description="يُرجع الحالة الحالية والتقدم لفحص معيّن.",
+    summary="Query scan status",
+    description="Returns current status and progress for a specific scan.",
 )
 async def get_scan_status(
     scan_id: str,
@@ -192,13 +192,13 @@ async def get_scan_status(
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="معرّف الفحص غير صالح",
+            detail="Invalid scan ID",
         )
 
     if not scan:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="الفحص غير موجود",
+            detail="Scan not found",
         )
 
     return ScanStatusResponse(

@@ -10,13 +10,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.core.database import get_collection
 from app.core.security import get_current_user
 
-router = APIRouter(prefix="/api/reports", tags=["📊 التقارير"])
+router = APIRouter(prefix="/api/reports", tags=["📊 Reports"])
 
 
 @router.get(
     "",
-    summary="جلب جميع التقارير",
-    description="يُرجع قائمة مختصرة بجميع التقارير الأمنية مرتبة من الأحدث.",
+    summary="Get all reports",
+    description="Returns a brief list of all security reports sorted from newest.",
 )
 async def get_all_reports(
     current_user: dict = Depends(get_current_user),
@@ -56,8 +56,8 @@ async def get_all_reports(
 
 @router.get(
     "/{report_id}",
-    summary="جلب تقرير واحد بالتفصيل",
-    description="يُرجع التقرير الأمني الكامل مع تحليل الذكاء الاصطناعي ومؤشر الأمان.",
+    summary="Get single report details",
+    description="Returns the full security report with AI analysis and security score.",
 )
 async def get_report_detail(
     report_id: str,
@@ -78,7 +78,7 @@ async def get_report_detail(
     if not report:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="التقرير غير موجود",
+            detail="Report not found",
         )
 
     # ─── تحويل ObjectId لنص ───
@@ -90,8 +90,8 @@ async def get_report_detail(
 @router.delete(
     "/{report_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="حذف تقرير",
-    description="يحذف تقرير أمني بمعرّفه.",
+    summary="Delete report",
+    description="Deletes a security report by ID.",
 )
 async def delete_report(
     report_id: str,
@@ -112,7 +112,7 @@ async def delete_report(
     if result.deleted_count == 0:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="التقرير غير موجود",
+            detail="Report not found",
         )
 
     # ─── حذف سجل الفحص المرتبط أيضاً ───

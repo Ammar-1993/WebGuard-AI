@@ -36,12 +36,12 @@ RISK_WEIGHTS = {
 
 # ─── جدول التصنيف (Grade) ───
 GRADE_THRESHOLDS = [
-    (95, SecurityGrade.A_PLUS, "#10B981", "ممتاز — الموقع آمن جداً"),
-    (85, SecurityGrade.A, "#22C55E", "جيد جداً — ثغرات طفيفة فقط"),
-    (70, SecurityGrade.B, "#F59E0B", "جيد — يحتاج بعض التحسينات"),
-    (50, SecurityGrade.C, "#F97316", "متوسط — ثغرات تحتاج معالجة"),
-    (30, SecurityGrade.D, "#EF4444", "ضعيف — ثغرات خطيرة موجودة"),
-    (0, SecurityGrade.F, "#DC2626", "خطير — يتطلب إصلاحاً فورياً"),
+    (95, SecurityGrade.A_PLUS, "#10B981", "Excellent — Site is very secure"),
+    (85, SecurityGrade.A, "#22C55E", "Very Good — Only minor vulnerabilities"),
+    (70, SecurityGrade.B, "#F59E0B", "Good — Needs some improvements"),
+    (50, SecurityGrade.C, "#F97316", "Average — Vulnerabilities need fixing"),
+    (30, SecurityGrade.D, "#EF4444", "Poor — Critical vulnerabilities present"),
+    (0, SecurityGrade.F, "#DC2626", "Critical — Requires immediate action"),
 ]
 
 
@@ -82,7 +82,7 @@ def calculate_security_score(vulnerabilities: list) -> SecurityScore:
     # ─── 4. تحديد التقدير واللون ───
     grade = SecurityGrade.F
     color = "#DC2626"
-    label = "خطير — يتطلب إصلاحاً فورياً"
+    label = "Critical — Requires immediate action"
 
     for threshold, g, c, l in GRADE_THRESHOLDS:
         if score >= threshold:
