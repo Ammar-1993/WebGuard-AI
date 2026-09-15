@@ -111,7 +111,7 @@ export default function Home() {
 
         {/* Footer */}
         <footer className="text-center py-8 text-gray-500 text-sm border-t border-gray-800/50">
-          <p>© 2024 WebGuard AI — University Graduation Project</p>
+          <p>© 2026 WebGuard AI — University of Bisha</p>
         </footer>
       </div>
     </>
