@@ -6,5 +6,6 @@ pydantic-settings>=2.0.0
 python-dotenv>=1.0.0    # لقراءة ملفات المتغيرات البيئية .env
 httpx>=0.25.0           # عميل HTTP غير متزامن للتواصل مع الخدمات الأخرى (Scanner, AI)
 passlib[bcrypt]>=1.7.4  # لتشفير كلمات المرور باستخدام خوارزمية bcrypt
+bcrypt==3.2.2           # (FIX) تثبيت الإصدار لمنع خطأ 72-byte في مكتبة passlib
 python-jose[cryptography]>=3.3.0  # لإنشاء والتحقق من JWT tokens
 email-validator>=2.0.0  # للتحقق من صحة عناوين البريد الإلكتروني (EmailStr)
