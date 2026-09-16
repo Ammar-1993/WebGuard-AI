@@ -9,7 +9,7 @@
 [![Docker](https://img.shields.io/badge/Docker-Compose_V2-2496ED.svg?logo=docker&logoColor=white)](https://www.docker.com/)
 [![OWASP ZAP](https://img.shields.io/badge/Engine-OWASP_ZAP_2.14+-00549E.svg?logo=owasp&logoColor=white)](https://www.zaproxy.org/)
 [![LangChain](https://img.shields.io/badge/Orchestrator-LangChain-1C3C3C.svg?logo=chainlink&logoColor=white)](https://www.langchain.com/)
-[![OpenAI](https://img.shields.io/badge/AI_Model-GPT--4o--mini-412991.svg?logo=openai&logoColor=white)](https://openai.com/)
+[![OpenAI](https://img.shields.io/badge/AI_Model-GPT--4o-412991.svg?logo=openai&logoColor=white)](https://openai.com/)
 [![MongoDB](https://img.shields.io/badge/Database-MongoDB_6.0-47A248.svg?logo=mongodb&logoColor=white)](https://www.mongodb.com/)
 
 ---
@@ -21,7 +21,7 @@
 Traditional security scanners flood engineering teams with complex, low-level technical reports packed with false positives, jargon, and generic advice. WebGuard AI introduces a **Dual-Engine Architecture**:
 
 1. **Deterministic Security Engine (OWASP ZAP):** Executes rigorous, standardized crawling and active payload testing against web targets according to the **OWASP Top 10** vulnerabilities.
-2. **Cognitive Analysis Layer (LangChain + OpenAI GPT-4o-mini):** Triages raw alerts, validates findings against context, eliminates false positives, and generates ready-to-deploy remediation code patches in plain developer language.
+2. **Cognitive Analysis Layer (LangChain + OpenAI GPT-4o):** Triages raw alerts, validates findings against context, eliminates false positives, and generates ready-to-deploy remediation code patches in plain developer language.
 
 The result is an automated, developer-first security posture assessment featuring an algorithmic **Security Score (0–100)**, risk heatmaps, and actionable fix guides.
 
@@ -55,7 +55,7 @@ graph TD
         ZAPEngine -->|Active Payloads & Spider| TargetWebsite[Target Web Application]
         
         Backend -->|Analyze Raw Alerts / Port 8011| AIAnalyzer[AI Analyzer Service]
-        AIAnalyzer -->|LangChain Pipeline| OpenAIAPI[OpenAI API GPT-4o-mini]
+        AIAnalyzer -->|LangChain Pipeline| OpenAIAPI[OpenAI API GPT-4o]
     end
 ```
 
@@ -102,7 +102,7 @@ sequenceDiagram
     rect rgb(25, 30, 45)
         Note over BE,AI: Stage 2 — Cognitive Triage (AI Analyzer)
         BE->>AI: POST /api/analyze { alerts }
-        AI->>AI: Filter False Positives & Synthesize Fixes (GPT-4o-mini)
+        AI->>AI: Filter False Positives & Synthesize Fixes (GPT-4o)
         AI-->>BE: Return Verified Analysis & Remediation Code
     end
 
@@ -151,7 +151,7 @@ $$Score = \max\left(0, 100 - \sum (\text{Vulnerability Count} \times \text{Weigh
 - **Frontend:** Next.js (App / Pages Router), React 18, Tailwind CSS, Lucide React, Chart.js.
 - **Backend Services:** FastAPI, Python 3.11, Pydantic v2, Motor (Async MongoDB), PyJWT, Passlib (bcrypt).
 - **Scanner Engine:** OWASP ZAP (Zed Attack Proxy) 2.14+, `zapv2` Python Client.
-- **AI & Intelligence:** LangChain, OpenAI API (`gpt-4o-mini`), Structured JSON Outputs.
+- **AI & Intelligence:** LangChain, OpenAI API (`gpt-4o` / `gpt-4o-mini`), Structured JSON Outputs.
 - **Persistence & DevOps:** MongoDB 6.0, Docker, Docker Compose, Linux / WSL2.
 
 ---

@@ -70,6 +70,7 @@ services:
       - "8011:8011" # المنفذ المعتمد: 8011
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o}
     networks:
       - webguard_net
 

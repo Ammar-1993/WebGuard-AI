@@ -33,8 +33,9 @@ app = FastAPI(
     description="AI Vulnerability Analysis Service — LangChain + OpenAI",
 )
 
-# ─── قراءة مفتاح OpenAI من متغيرات البيئة ───
+# ─── قراءة مفتاح وإعدادات OpenAI من متغيرات البيئة ───
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
 
 # ─── قراءة System Prompt من الملف ───
 PROMPT_PATH = Path(__file__).parent / "prompts" / "system_prompt.txt"
@@ -90,8 +91,9 @@ async def _analyze_with_ai(alerts: List[dict]) -> dict:
         )
 
     # ─── إنشاء نموذج LangChain ───
+    print(f"🧠 Initializing LangChain analyzer with model: {OPENAI_MODEL}")
     llm = ChatOpenAI(
-        model="gpt-4o-mini",
+        model=OPENAI_MODEL,
         temperature=0.1,  # حرارة منخفضة لنتائج دقيقة ومتسقة
         api_key=OPENAI_API_KEY,
         max_tokens=4000,
