@@ -48,18 +48,23 @@ The result is an automated, developer-first security posture assessment featurin
 WebGuard AI operates as a containerized microservices ecosystem managed by Docker Compose.
 
 ```mermaid
-graph TD
-    User([Security Engineer / Developer]) -->|HTTPS / Port 3030| Frontend[Next.js Frontend Dashboard]
-    Frontend -->|REST API + JWT / Port 8010| Backend[FastAPI Backend Gateway]
-    
-    subgraph "Internal Network (webguard_net)"
-        Backend -->|Persistent Storage| MongoDB[(MongoDB 6.0\nPort 27017)]
-        Backend -->|Dispatch Scan / Port 8012| ScannerAPI[Security Scanner Service]
-        ScannerAPI -->|ZAP API Wrapper / Port 8092| ZAPEngine[OWASP ZAP Daemon]
-        ZAPEngine -->|Active Payloads & Spider| TargetWebsite[Target Web Application]
+graph TB
+    User([Security Engineer / Developer]) -->|HTTP / Port 3030| Frontend[Next.js Frontend Dashboard]
+    User -.->|Direct API Access / Port 8010| Backend[FastAPI Backend Gateway]
+
+    subgraph DockerNet ["Docker Container Ecosystem (webguard_net)"]
+        Frontend -->|REST API + Bearer JWT / Port 8010| Backend
         
-        Backend -->|Analyze Raw Alerts / Port 8011| AIAnalyzer[AI Analyzer Service]
-        AIAnalyzer -->|LangChain Pipeline| OpenAIAPI[OpenAI API GPT-4o]
+        Backend -->|Motor Async / Port 27017| MongoDB[(MongoDB 6.0 Database)]
+        Backend -->|HTTP POST / Port 8012| ScannerAPI[Security Scanner Service]
+        ScannerAPI -->|ZAP API Wrapper / Port 8092| ZAPEngine[OWASP ZAP Core Engine]
+        
+        Backend -->|HTTP POST / Port 8011| AIAnalyzer[AI Analyzer Service]
+    end
+
+    subgraph External ["External Network & Cloud Services (Internet)"]
+        ZAPEngine -->|Outbound Active Scan & Spider| TargetWebsite[Target Web Application]
+        AIAnalyzer -->|HTTPS Outbound / LangChain| OpenAIAPI[OpenAI Cloud API GPT-4o]
     end
 ```
 
@@ -78,21 +83,22 @@ graph TD
 
 ## 🔄 End-to-End Scan Pipeline
 
-```mermaid
 sequenceDiagram
     autonumber
-    actor Dev as Developer
+    actor Dev as Security Operator / Dev
     participant UI as Next.js Dashboard
     participant BE as Backend Gateway
     participant DB as MongoDB
     participant SC as Scanner Service
-    participant ZAP as OWASP ZAP
+    participant ZAP as OWASP ZAP Engine
     participant AI as AI Analyzer
+    participant OAI as OpenAI API (GPT-4o)
 
     Dev->>UI: Submit Target URL (e.g. https://target.com)
-    UI->>BE: POST /api/scan/start { target_url }
-    BE->>DB: Create Scan Record (status: PENDING)
-    BE-->>UI: Return scan_id & Start Background Worker
+    UI->>BE: POST /api/scan { target_url }
+    BE->>DB: Create Scan Record (status: PENDING, user_id)
+    BE-->>UI: Return 202 Accepted { scan_id }
+    Note over BE: Launch Background Pipeline Task
 
     rect rgb(20, 25, 40)
         Note over BE,ZAP: Stage 1 — Vulnerability Discovery (ZAP)
@@ -100,24 +106,35 @@ sequenceDiagram
         SC->>ZAP: Open URL & Run Spider Crawler
         SC->>ZAP: Run Active Vulnerability Scan
         ZAP-->>SC: Extract Raw Findings & Alerts
-        SC-->>BE: Return Alert Payload (JSON)
+        SC-->>BE: Return Alerts Payload (JSON)
     end
 
     rect rgb(25, 30, 45)
-        Note over BE,AI: Stage 2 — Cognitive Triage (AI Analyzer)
+        Note over BE,OAI: Stage 2 — Cognitive Triage (LangChain + GPT-4o)
         BE->>AI: POST /api/analyze { alerts }
-        AI->>AI: Filter False Positives & Synthesize Fixes (GPT-4o)
-        AI-->>BE: Return Verified Analysis & Remediation Code
+        AI->>OAI: Structured Prompt (Triage, Filter False Positives, Code Fixes)
+        OAI-->>AI: Enriched Analysis & Remediation Patches
+        AI-->>BE: Return Validated Analysis & Summaries
     end
 
     rect rgb(20, 35, 30)
-        Note over BE,DB: Stage 3 — Scoring & Persistence
-        BE->>BE: Calculate Algorithmic Security Score & Grade
-        BE->>DB: Store Final Report & Set Status COMPLETED
+        Note over BE,DB: Stage 3 — Scoring & Persistence (User Isolated)
+        BE->>BE: Calculate Algorithmic Security Score & Grade (0–100)
+        BE->>DB: Store Final Report (with user_id)
+        BE->>DB: Update Scan Status → COMPLETED (100%)
     end
 
-    UI->>BE: Poll GET /api/scan/status/{scan_id}
-    BE-->>UI: Return Final Report with Score, Charts & Vulnerabilities
+    loop Every 3 Seconds (Polling)
+        UI->>BE: GET /api/scan/{scan_id}
+        BE-->>UI: Return Current Status { progress, status }
+    end
+
+    Note over UI: Status is COMPLETED
+    UI->>BE: GET /api/reports/{scan_id}
+    BE->>DB: Query User-Owned Report
+    DB-->>BE: Return Report Document
+    BE-->>UI: Return Full Report (Score, AI Analysis, Code Patches)
+    UI-->>Dev: Render Interactive Security Dashboard (PDF/JSON Ready)
 ```
 
 ---
