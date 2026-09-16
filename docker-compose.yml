@@ -113,6 +113,10 @@ services:
       - "3030:3030" # المنفذ المعتمد: 3030
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8010
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
     depends_on:
       - backend-api
     networks:

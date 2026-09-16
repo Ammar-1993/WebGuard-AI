@@ -30,7 +30,13 @@ export default function Navbar() {
           <div className="flex items-center gap-4">
             {user ? (
               <>
-                <span className="text-gray-400 text-sm hidden sm:block">
+                <Link
+                  href="/reports"
+                  className="text-gray-400 hover:text-primary-300 text-sm font-medium transition-colors px-3 py-2"
+                >
+                  📄 Reports
+                </Link>
+                <span className="text-gray-400 text-sm hidden sm:block border-l border-gray-700 pl-4 ml-2">
                   Welcome, <span className="text-primary-300 font-medium">{user.username}</span>
                 </span>
                 <button

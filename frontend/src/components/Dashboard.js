@@ -29,9 +29,23 @@ export default function Dashboard({ report, onNewScan }) {
           <h2 className="text-3xl font-bold text-white">📊 Security Scan Results</h2>
           <p className="text-gray-400 mt-1">{report?.target_url}</p>
         </div>
-        <button onClick={onNewScan} className="btn-secondary text-sm">
-          🔄 New Scan
-        </button>
+        <div className="flex gap-2 print:hidden">
+          <button onClick={() => window.print()} className="btn-secondary text-sm">
+            📄 Export PDF
+          </button>
+          <button onClick={() => {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(report, null, 2));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", `webguard-report-${report?.scan_id || report?.id || 'export'}.json`);
+            dlAnchorElem.click();
+          }} className="btn-secondary text-sm">
+            💾 Export JSON
+          </button>
+          <button onClick={onNewScan} className="btn-primary text-sm">
+            🔄 New Scan
+          </button>
+        </div>
       </div>
 
       {/* ─── Row 1: Security Gauge + Summary ─── */}

@@ -1,18 +1,41 @@
 import Head from 'next/head';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import Navbar from '@/components/Navbar';
 import ScanForm from '@/components/ScanForm';
 import ScanProgress from '@/components/ScanProgress';
 import Dashboard from '@/components/Dashboard';
+import { getReportDetail } from '@/utils/api';
 
 /**
  * WebGuard AI — Home Page
  * Displays the scan form and results dashboard after completion.
  */
 export default function Home() {
+  const router = useRouter();
   const [scanState, setScanState] = useState('idle'); // idle | scanning | completed
   const [scanData, setScanData] = useState(null);
   const [reportData, setReportData] = useState(null);
+  const [loadingReport, setLoadingReport] = useState(false);
+
+  useEffect(() => {
+    if (router.query.report_id) {
+      setLoadingReport(true);
+      getReportDetail(router.query.report_id)
+        .then((report) => {
+          if (report) {
+            setReportData(report);
+            setScanState('completed');
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to load report from URL:', err);
+        })
+        .finally(() => {
+          setLoadingReport(false);
+        });
+    }
+  }, [router.query.report_id]);
 
   const handleScanStart = (data) => {
     setScanState('scanning');
@@ -28,6 +51,9 @@ export default function Home() {
     setScanState('idle');
     setScanData(null);
     setReportData(null);
+    if (router.query.report_id) {
+      router.push('/', undefined, { shallow: true });
+    }
   };
 
   return (
@@ -110,8 +136,8 @@ export default function Home() {
         </main>
 
         {/* Footer */}
-        <footer className="text-center py-8 text-gray-500 text-sm border-t border-gray-800/50">
-          <p>© 2026 WebGuard AI — University of Bisha</p>
+        <footer className="text-center py-8 text-gray-500 text-sm border-t border-gray-800/50 print:hidden">
+          <p>© 2026 WebGuard AI — Intelligent Vulnerability Scanner</p>
         </footer>
       </div>
     </>

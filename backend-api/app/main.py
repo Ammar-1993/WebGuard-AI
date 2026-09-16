@@ -51,8 +51,7 @@ app = FastAPI(
     version=settings.APP_VERSION,
     description=(
         "🛡️ WebGuard AI Platform — Smart vulnerability scanning system\n\n"
-        "Combines OWASP ZAP for discovery with AI (LangChain + OpenAI) for analysis.\n\n"
-        "**Graduation Project — University of Bisha**"
+        "Combines OWASP ZAP for discovery with AI (LangChain + OpenAI) for analysis."
     ),
     docs_url="/docs",
     redoc_url="/redoc",

@@ -136,3 +136,35 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #6366F1;
 }
+
+/* ─── Print Styles ─── */
+@media print {
+  body {
+    background-color: white !important;
+    color: black !important;
+  }
+  
+  .glass-card {
+    background: white !important;
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+    color: black !important;
+  }
+
+  .gradient-bg {
+    background: white !important;
+    animation: none !important;
+  }
+
+  .text-white {
+    color: black !important;
+  }
+
+  .text-gray-400, .text-gray-300 {
+    color: #333 !important;
+  }
+  
+  canvas, svg {
+    filter: invert(0) !important;
+  }
+}
