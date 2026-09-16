@@ -86,56 +86,48 @@ graph TB
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Dev as Security Operator / Dev
+    actor User as Operator
     participant UI as Next.js Dashboard
-    participant BE as Backend Gateway
-    participant DB as MongoDB
+    participant BE as FastAPI Gateway
+    participant DB as MongoDB Store
     participant SC as Scanner Service
-    participant ZAP as OWASP ZAP Engine
+    participant ZAP as OWASP ZAP
     participant AI as AI Analyzer
-    participant OAI as OpenAI API (GPT-4o)
+    participant OAI as OpenAI (GPT-4o)
 
-    Dev->>UI: Submit Target URL (e.g. https://target.com)
+    User->>UI: Submit Target URL<br/>(e.g., https://target.com)
     UI->>BE: POST /api/scan { target_url }
-    BE->>DB: Create Scan Record (status: PENDING, user_id)
-    BE-->>UI: Return 202 Accepted { scan_id }
-    Note over BE: Launch Background Pipeline Task
+    BE->>DB: Insert Scan Record<br/>(PENDING, user_id)
+    BE-->>UI: 202 Accepted { scan_id }
+    Note over BE: Launch Async Scan Pipeline
 
-    rect rgb(20, 25, 40)
-        Note over BE,ZAP: Stage 1 — Vulnerability Discovery (ZAP)
-        BE->>SC: POST /api/scan { target_url }
-        SC->>ZAP: Open URL & Run Spider Crawler
-        SC->>ZAP: Run Active Vulnerability Scan
-        ZAP-->>SC: Extract Raw Findings & Alerts
-        SC-->>BE: Return Alerts Payload (JSON)
-    end
+    Note over BE,ZAP: Stage 1: Automated Vulnerability Discovery
+    BE->>SC: POST /api/scan { target_url }
+    SC->>ZAP: Run Spider & Active Scan
+    ZAP-->>SC: Raw Findings & Vulnerability Alerts
+    SC-->>BE: Return Alerts Payload (JSON)
 
-    rect rgb(25, 30, 45)
-        Note over BE,OAI: Stage 2 — Cognitive Triage (LangChain + GPT-4o)
-        BE->>AI: POST /api/analyze { alerts }
-        AI->>OAI: Structured Prompt (Triage, Filter False Positives, Code Fixes)
-        OAI-->>AI: Enriched Analysis & Remediation Patches
-        AI-->>BE: Return Validated Analysis & Summaries
-    end
+    Note over BE,OAI: Stage 2: AI Cognitive Triage & Code Fixes
+    BE->>AI: POST /api/analyze { alerts }
+    AI->>OAI: Triage, Deduplication<br/>& Remediation Prompt
+    OAI-->>AI: Enriched Analysis & Code Patches
+    AI-->>BE: Return Validated Security Analysis
 
-    rect rgb(20, 35, 30)
-        Note over BE,DB: Stage 3 — Scoring & Persistence (User Isolated)
-        BE->>BE: Calculate Algorithmic Security Score & Grade (0–100)
-        BE->>DB: Store Final Report (with user_id)
-        BE->>DB: Update Scan Status → COMPLETED (100%)
-    end
+    Note over BE,DB: Stage 3: Scoring & Tenant Persistence
+    BE->>BE: Compute Algorithmic Score<br/>& Grade (0–100)
+    BE->>DB: Save Final Report (scoped to user_id)<br/>& Update Status: COMPLETED
 
-    loop Every 3 Seconds (Polling)
+    loop Polling Every 3s
         UI->>BE: GET /api/scan/{scan_id}
-        BE-->>UI: Return Current Status { progress, status }
+        BE-->>UI: Return Status & Progress
     end
 
-    Note over UI: Status is COMPLETED
+    Note over UI,BE: Pipeline Completed
     UI->>BE: GET /api/reports/{scan_id}
-    BE->>DB: Query User-Owned Report
+    BE->>DB: Query User Report (user_id)
     DB-->>BE: Return Report Document
-    BE-->>UI: Return Full Report (Score, AI Analysis, Code Patches)
-    UI-->>Dev: Render Interactive Security Dashboard (PDF/JSON Ready)
+    BE-->>UI: Return Full Report Payload
+    UI-->>User: Render Interactive Dashboard<br/>(Ready for PDF / JSON Export)
 ```
 
 ---
