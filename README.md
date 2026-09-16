@@ -33,9 +33,12 @@ The result is an automated, developer-first security posture assessment featurin
 - **🧠 AI-Powered Alert Triaging:** Evaluates discovered alerts to filter false positives and surface high-confidence vulnerabilities.
 - **🛠️ Actionable Code Remediation:** Delivers tailored code solutions (Python, Node.js, PHP, React, etc.) and configuration hardening guides directly inside each vulnerability card.
 - **📊 Algorithmic Security Scoring:** Calculates an objective security grade (`A+` to `F`) based on weighted risk impacts, displayed on an interactive visual gauge.
-- **🖥️ Modern Next.js Dashboard:** Built with Next.js and Tailwind CSS, featuring live progress polling, risk charts, quick filtering, and responsive dark-mode styling.
+- **🖨️ Executive Report Exporting (PDF & JSON):** One-click high-fidelity PDF export featuring an automated print-optimized stylesheet, alongside machine-readable full JSON downloads for compliance and security audit trails.
+- **📜 Centralized Reports History (`/reports`):** Comprehensive scan archive allowing security engineers to review past assessments, track vulnerability posture over time, and inspect or purge historical records.
+- **🔍 Deep-Linked Report Inspection:** Direct route loading (`/?report_id=...`) to revisit and analyze any historical assessment in the full interactive Dashboard.
+- **🖥️ Modern Next.js Dashboard:** Built with Next.js and Tailwind CSS, featuring live progress polling, risk charts, quick filtering, hot-reloading development support, and responsive dark-mode styling.
+- **⚙️ Configurable LLM Intelligence:** Flexible AI engine supporting dynamic model switching (`gpt-4o`, `gpt-4o-mini`, etc.) via environment variables.
 - **🔐 Secure Microservices Architecture:** Zero shared state; all 6 services communicate via an internal Docker bridge network with JWT-secured REST APIs.
-- **📜 Audit Trails & Historical Reports:** Full persistence in MongoDB with instant retrieval, search, and comparative historical reports.
 
 ---
 
@@ -146,13 +149,24 @@ $$Score = \max\left(0, 100 - \sum (\text{Vulnerability Count} \times \text{Weigh
 
 ---
 
+## 📄 Reporting, Exporting & Audit History
+
+WebGuard AI provides enterprise-grade reporting workflows to bridge security engineering with executive and compliance teams:
+
+- **🖨️ One-Click PDF Export:** Directly from the scan dashboard, click **"Export PDF"** to generate a clean, print-ready document. The custom `@media print` CSS engine automatically converts the dark UI into an executive, high-contrast white layout while omitting interactive buttons and preserving security gauges, charts, and remediation directives.
+- **💾 Machine-Readable JSON Downloads:** Export full vulnerability payloads—including verified findings, false-positive metrics, severity ratings, and AI-generated remediation patches—for automated ingestion into SIEMs, defect trackers (Jira/GitHub), or compliance archives.
+- **📜 Centralized Reports Hub (`/reports`):** A dedicated interface to review, search, deep-link, and purge historical assessments stored in MongoDB.
+- **🔍 Instant Historical Inspection:** Re-open any past scan into the live dashboard with a single click (`👁️ View`) or via direct URL parameter (`/?report_id=...`).
+
+---
+
 ## 🛠️ Tech Stack
 
-- **Frontend:** Next.js (App / Pages Router), React 18, Tailwind CSS, Lucide React, Chart.js.
+- **Frontend:** Next.js (Pages Router & Turbopack), React 19, Tailwind CSS, Recharts.
 - **Backend Services:** FastAPI, Python 3.11, Pydantic v2, Motor (Async MongoDB), PyJWT, Passlib (bcrypt).
 - **Scanner Engine:** OWASP ZAP (Zed Attack Proxy) 2.14+, `zapv2` Python Client.
-- **AI & Intelligence:** LangChain, OpenAI API (`gpt-4o` / `gpt-4o-mini`), Structured JSON Outputs.
-- **Persistence & DevOps:** MongoDB 6.0, Docker, Docker Compose, Linux / WSL2.
+- **AI & Intelligence:** LangChain, OpenAI API (configurable via `OPENAI_MODEL`, supporting `gpt-4o` / `gpt-4o-mini`), Structured JSON Outputs.
+- **Persistence & DevOps:** MongoDB 6.0, Docker, Docker Compose (with Volume hot-reloading for frontend), Linux / WSL2.
 
 ---
 
@@ -190,6 +204,9 @@ Open `.env` and fill in your credentials:
 # OpenAI API Key (Required for AI Analysis)
 OPENAI_API_KEY=sk-proj-your-openai-api-key-here
 
+# Preferred OpenAI Model (Default: gpt-4o | Optional: gpt-4o-mini, gpt-4-turbo)
+OPENAI_MODEL=gpt-4o
+
 # Secret Key for JWT Token Generation
 JWT_SECRET=your-secure-random-jwt-secret-key
 ```
@@ -223,8 +240,9 @@ webguard-frontend      webguard-frontend          Up                     0.0.0.0
 
 | Portal | URL | Description |
 | :--- | :--- | :--- |
-| **Web Dashboard** | [http://localhost:3030](http://localhost:3030) | Main user interface |
-| **Backend API Docs** | [http://localhost:8010/docs](http://localhost:8010/docs) | Interactive Swagger UI |
+| **Web Dashboard** | [http://localhost:3030](http://localhost:3030) | Main scan execution and interactive assessment view |
+| **Reports History** | [http://localhost:3030/reports](http://localhost:3030/reports) | Historical scan audit trail, JSON exports, and report management |
+| **Backend API Docs** | [http://localhost:8010/docs](http://localhost:8010/docs) | Interactive Swagger UI for core backend gateway |
 | **AI Service Docs** | [http://localhost:8011/docs](http://localhost:8011/docs) | AI Analyzer OpenAPI documentation |
 | **Scanner Service Docs** | [http://localhost:8012/docs](http://localhost:8012/docs) | Scanner OpenAPI documentation |
 
@@ -244,8 +262,8 @@ The Backend Gateway provides secure, token-authenticated RESTful endpoints:
 ### Security Scans (`/api/scan`)
 | Method | Endpoint | Description | Auth Required |
 | :---: | :--- | :--- | :---: |
-| `POST` | `/api/scan/start` | Trigger a new asynchronous DAST scan | ✅ |
-| `GET` | `/api/scan/status/{scan_id}` | Poll real-time scan progress & results | ✅ |
+| `POST` | `/api/scan` | Trigger a new asynchronous DAST scan pipeline | ✅ |
+| `GET` | `/api/scan/{scan_id}` | Poll real-time scan progress, status & findings | ✅ |
 
 ### Security Reports (`/api/reports`)
 | Method | Endpoint | Description | Auth Required |
