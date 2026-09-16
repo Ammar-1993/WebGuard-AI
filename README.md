@@ -83,6 +83,7 @@ graph TB
 
 ## 🔄 End-to-End Scan Pipeline
 
+```mermaid
 sequenceDiagram
     autonumber
     actor Dev as Security Operator / Dev
