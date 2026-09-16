@@ -6,10 +6,11 @@ WebGuard AI — Authentication API Routes
 
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException, status
+from bson import ObjectId
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.core.database import get_collection
-from app.core.security import hash_password, verify_password, create_access_token
+from app.core.security import hash_password, verify_password, create_access_token, get_current_user
 from app.models.user import UserCreate, UserLogin, UserResponse, TokenResponse
 
 router = APIRouter(prefix="/api/auth", tags=["🔐 Authentication"])
@@ -108,3 +109,32 @@ async def login(credentials: UserLogin):
             created_at=user["created_at"],
         ),
     )
+
+
+@router.get(
+    "/me",
+    response_model=UserResponse,
+    summary="Get current user profile",
+    description="Returns profile information for the currently authenticated user.",
+)
+async def get_me(current_user: dict = Depends(get_current_user)):
+    """يجلب بيانات الملف الشخصي للمستخدم الحالي."""
+    users = get_collection("users")
+    try:
+        user = await users.find_one({"_id": ObjectId(current_user["user_id"])})
+    except Exception:
+        user = None
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    return UserResponse(
+        id=str(user["_id"]),
+        username=user["username"],
+        email=user["email"],
+        created_at=user["created_at"],
+    )
+
