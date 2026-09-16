@@ -85,6 +85,8 @@ services:
     restart: always
     ports:
       - "8010:8010" # المنفذ المعتمد: 8010
+    volumes:
+      - ./backend-api:/app
     environment:
       - MONGO_URI=mongodb://mongodb:27017/webguard_db
       - AI_SERVICE_URL=http://ai-analyzer:8011

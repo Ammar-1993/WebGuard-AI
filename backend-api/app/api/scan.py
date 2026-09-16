@@ -20,7 +20,7 @@ from app.services.scoring import calculate_security_score
 router = APIRouter(prefix="/api/scan", tags=["🔍 Security Scan"])
 
 
-async def _run_scan_pipeline(scan_id: str, target_url: str):
+async def _run_scan_pipeline(scan_id: str, target_url: str, user_id: str = None):
     """
     خط أنابيب الفحص الكامل — يعمل في الخلفية (Background Task).
     
@@ -35,6 +35,15 @@ async def _run_scan_pipeline(scan_id: str, target_url: str):
     """
     scans = get_collection("scans")
     reports = get_collection("reports")
+
+    # إذا لم يُمرر user_id مباشرة، يتم استخراجه من سجل الفحص
+    if not user_id:
+        try:
+            scan_record = await scans.find_one({"_id": ObjectId(scan_id)})
+            if scan_record:
+                user_id = scan_record.get("user_id")
+        except Exception:
+            user_id = None
 
     try:
         # ─── المرحلة 1: فحص ZAP ───
@@ -93,6 +102,7 @@ async def _run_scan_pipeline(scan_id: str, target_url: str):
         report_doc = {
             "scan_id": scan_id,
             "target_url": target_url,
+            "user_id": user_id,
             "scan_date": datetime.now(timezone.utc),
             "security_score": security_score.model_dump(),
             "total_vulnerabilities": len(raw_alerts),
@@ -162,6 +172,7 @@ async def start_new_scan(
         _run_scan_pipeline,
         scan_id,
         str(scan_request.target_url),
+        current_user["user_id"],
     )
 
     return ScanStatusResponse(
@@ -199,6 +210,14 @@ async def get_scan_status(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Scan not found",
+        )
+
+    # ─── التحقق من صلاحية الوصول للفحص (Authorization Check) ───
+    scan_user_id = scan.get("user_id")
+    if scan_user_id and scan_user_id != current_user["user_id"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to access this scan",
         )
 
     return ScanStatusResponse(

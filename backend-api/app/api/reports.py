@@ -16,16 +16,17 @@ router = APIRouter(prefix="/api/reports", tags=["📊 Reports"])
 @router.get(
     "",
     summary="Get all reports",
-    description="Returns a brief list of all security reports sorted from newest.",
+    description="Returns a brief list of all security reports for the authenticated user, sorted from newest.",
 )
 async def get_all_reports(
     current_user: dict = Depends(get_current_user),
 ):
-    """يجلب جميع التقارير الأمنية مرتبة تنازلياً حسب التاريخ."""
+    """يجلب جميع التقارير الأمنية الخاصة بالمستخدم الحالي مرتبة تنازلياً حسب التاريخ."""
     reports = get_collection("reports")
+    user_id = current_user["user_id"]
 
     cursor = reports.find(
-        {},
+        {"user_id": user_id},
         {
             "scan_id": 1,
             "target_url": 1,
@@ -63,7 +64,7 @@ async def get_report_detail(
     report_id: str,
     current_user: dict = Depends(get_current_user),
 ):
-    """يجلب تقرير أمني مُفصّل بمعرّفه."""
+    """يجلب تقرير أمني مُفصّل بمعرّفه للمستخدم المصرح له فقط."""
     reports = get_collection("reports")
 
     try:
@@ -81,6 +82,14 @@ async def get_report_detail(
             detail="Report not found",
         )
 
+    # ─── التحقق من ملكية التقرير (Authorization Check) ───
+    report_user_id = report.get("user_id")
+    if report_user_id and report_user_id != current_user["user_id"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to access this report",
+        )
+
     # ─── تحويل ObjectId لنص ───
     report["id"] = str(report.pop("_id"))
 
@@ -91,29 +100,45 @@ async def get_report_detail(
     "/{report_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete report",
-    description="Deletes a security report by ID.",
+    description="Deletes a security report by ID if owned by the current user.",
 )
 async def delete_report(
     report_id: str,
     current_user: dict = Depends(get_current_user),
 ):
-    """يحذف تقرير أمني بمعرّفه."""
+    """يحذف تقرير أمني بمعرّفه للمستخدم المالك فقط."""
     reports = get_collection("reports")
     scans = get_collection("scans")
+    user_id = current_user["user_id"]
 
     try:
-        result = await reports.delete_one({"_id": ObjectId(report_id)})
+        report = await reports.find_one({"_id": ObjectId(report_id)})
     except Exception:
-        result = None
+        report = None
 
-    if not result or result.deleted_count == 0:
-        result = await reports.delete_one({"scan_id": report_id})
+    if not report:
+        report = await reports.find_one({"scan_id": report_id})
 
-    if result.deleted_count == 0:
+    if not report:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Report not found",
         )
 
+    # ─── التحقق من صلاحية الحذف (Authorization Check) ───
+    if report.get("user_id") and report.get("user_id") != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to delete this report",
+        )
+
+    # ─── حذف التقرير ───
+    await reports.delete_one({"_id": report["_id"]})
+
     # ─── حذف سجل الفحص المرتبط أيضاً ───
-    await scans.delete_one({"_id": ObjectId(report_id)})
+    scan_id = report.get("scan_id")
+    if scan_id:
+        try:
+            await scans.delete_one({"_id": ObjectId(scan_id), "user_id": user_id})
+        except Exception:
+            pass

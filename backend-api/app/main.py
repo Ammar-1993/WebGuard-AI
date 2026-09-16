@@ -32,6 +32,28 @@ async def lifespan(app: FastAPI):
     # ─── Startup ───
     print("🚀 Starting WebGuard AI Backend...")
     await connect_db()
+
+    # ─── ربط التقارير السابقة بمستخدميها إن وجدت ───
+    try:
+        from bson import ObjectId
+        from app.core.database import get_collection
+        reports_col = get_collection("reports")
+        scans_col = get_collection("scans")
+        async for rep in reports_col.find({"user_id": {"$exists": False}}):
+            scan_id = rep.get("scan_id")
+            if scan_id:
+                try:
+                    scan_doc = await scans_col.find_one({"_id": ObjectId(scan_id)})
+                    if scan_doc and scan_doc.get("user_id"):
+                        await reports_col.update_one(
+                            {"_id": rep["_id"]},
+                            {"$set": {"user_id": scan_doc["user_id"]}}
+                        )
+                except Exception:
+                    pass
+    except Exception as e:
+        print(f"Warning: reports user_id backfill skipped: {e}")
+
     print("✅ Backend server is ready to work")
     yield
     # ─── Shutdown ───
