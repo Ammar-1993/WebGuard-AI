@@ -38,6 +38,7 @@ The result is an automated, developer-first security posture assessment featurin
 - **🔍 Deep-Linked Report Inspection:** Direct route loading (`/?report_id=...`) to revisit and analyze any historical assessment in the full interactive Dashboard.
 - **🖥️ Modern Next.js Dashboard:** Built with Next.js and Tailwind CSS, featuring live progress polling, risk charts, quick filtering, hot-reloading development support, and responsive dark-mode styling.
 - **⚙️ Configurable LLM Intelligence:** Flexible AI engine supporting dynamic model switching (`gpt-4o`, `gpt-4o-mini`, etc.) via environment variables.
+- **🛡️ Multi-Tenant User Data Isolation:** Enforces strict Broken Object Level Authorization (BOLA/IDOR) controls so security operators can only access, view, and delete their own vulnerability assessments.
 - **🔐 Secure Microservices Architecture:** Zero shared state; all 6 services communicate via an internal Docker bridge network with JWT-secured REST APIs.
 
 ---
@@ -253,24 +254,26 @@ webguard-frontend      webguard-frontend          Up                     0.0.0.0
 The Backend Gateway provides secure, token-authenticated RESTful endpoints:
 
 ### Authentication (`/api/auth`)
-| Method | Endpoint | Description | Auth Required |
+| Method | Endpoint | Description | Access Level |
 | :---: | :--- | :--- | :---: |
-| `POST` | `/api/auth/register` | Register a new security operator | ❌ |
-| `POST` | `/api/auth/login` | Authenticate and obtain JWT bearer token | ❌ |
-| `GET` | `/api/auth/me` | Fetch active authenticated profile | ✅ |
+| `POST` | `/api/auth/register` | Register a new security operator account | `🌐 Public` |
+| `POST` | `/api/auth/login` | Authenticate credentials and receive JWT bearer token | `🌐 Public` |
+| `GET` | `/api/auth/me` | Fetch active authenticated profile details | `🔒 Protected` |
 
 ### Security Scans (`/api/scan`)
-| Method | Endpoint | Description | Auth Required |
+| Method | Endpoint | Description | Access Level |
 | :---: | :--- | :--- | :---: |
-| `POST` | `/api/scan` | Trigger a new asynchronous DAST scan pipeline | ✅ |
-| `GET` | `/api/scan/{scan_id}` | Poll real-time scan progress, status & findings | ✅ |
+| `POST` | `/api/scan` | Trigger a new asynchronous DAST scan pipeline | `🔒 Protected` |
+| `GET` | `/api/scan/{scan_id}` | Poll real-time scan progress, status & findings | `🔒 Protected` |
 
 ### Security Reports (`/api/reports`)
-| Method | Endpoint | Description | Auth Required |
+| Method | Endpoint | Description | Access Level |
 | :---: | :--- | :--- | :---: |
-| `GET` | `/api/reports` | List all historical reports (sorted descending) | ✅ |
-| `GET` | `/api/reports/{report_id}` | Fetch granular report details & AI fixes | ✅ |
-| `DELETE` | `/api/reports/{report_id}` | Remove a report and associated artifacts | ✅ |
+| `GET` | `/api/reports` | List all historical reports for active user (sorted descending) | `🔒 Protected` |
+| `GET` | `/api/reports/{report_id}` | Fetch granular report details & AI remediation patches | `🔒 Protected` |
+| `DELETE` | `/api/reports/{report_id}` | Remove a report and associated scan artifacts | `🔒 Protected` |
+
+> 💡 **User Data Isolation:** All protected scan and report endpoints enforce strict Broken Object Level Authorization (BOLA/IDOR protection). Operators only have access to records linked to their authenticated `user_id`.
 
 ---
 
@@ -331,6 +334,7 @@ docker compose logs -f backend-api
 - **Defense in Depth:** The raw vulnerability engine operates independently from the AI decision model; AI cannot alter discovery findings, only enrich analysis.
 - **Zero Hardcoded Secrets:** Sensitive keys (`JWT_SECRET`, `OPENAI_API_KEY`) are dynamically injected via environment variables.
 - **Cryptographic Protection:** User credentials utilize salted bcrypt hashing with standard JWT expiry intervals.
+- **Object-Level Authorization (BOLA / IDOR Prevention):** In compliance with OWASP API Security Top 10 (`API1:2023`), all report queries and mutation endpoints enforce strict ownership validation against the authenticated `user_id`.
 
 ---
 
