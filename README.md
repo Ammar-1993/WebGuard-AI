@@ -29,27 +29,54 @@ The result is an automated, developer-first security posture assessment featurin
 
 ## ✨ Key Features
 
-⚡ **Automated DAST Discovery Pipeline:** Crawls web targets with an automated Spider and initiates active payload scans via an isolated OWASP ZAP daemon.
-
-🧠 **AI-Powered Alert Triaging:** Evaluates discovered alerts to filter false positives and surface high-confidence vulnerabilities.
-
-🛠️ **Actionable Code Remediation:** Delivers tailored code solutions (Python, Node.js, PHP, React, etc.) and configuration hardening guides directly inside each vulnerability card.
-
-📊 **Algorithmic Security Scoring:** Calculates an objective security grade (`A+` to `F`) based on weighted risk impacts, displayed on an interactive visual gauge.
-
-🖨️ **Executive Report Exporting (PDF & JSON):** One-click high-fidelity PDF export featuring an automated print-optimized stylesheet, alongside machine-readable full JSON downloads for compliance and security audit trails.
-
-📜 **Centralized Reports History (`/reports`):** Comprehensive scan archive allowing security engineers to review past assessments, track vulnerability posture over time, and inspect or purge historical records.
-
-🔍 **Deep-Linked Report Inspection:** Direct route loading (`/?report_id=...`) to revisit and analyze any historical assessment in the full interactive Dashboard.
-
-🖥️ **Modern Next.js Dashboard:** Built with Next.js and Tailwind CSS, featuring live progress polling, risk charts, quick filtering, hot-reloading development support, and responsive dark-mode styling.
-
-⚙️ **Configurable LLM Intelligence:** Flexible AI engine supporting dynamic model switching (`gpt-4o`, `gpt-4o-mini`, etc.) via environment variables.
-
-🛡️ **Multi-Tenant User Data Isolation:** Enforces strict Broken Object Level Authorization (BOLA/IDOR) controls so security operators can only access, view, and delete their own vulnerability assessments.
-
-🔐 **Secure Microservices Architecture:** Zero shared state; all 6 services communicate via an internal Docker bridge network with JWT-secured REST APIs.
+<table>
+  <tbody>
+    <tr>
+      <td valign="top" width="35">⚡</td>
+      <td><strong>Automated DAST Discovery Pipeline:</strong> Crawls web targets with an automated Spider and initiates active payload scans via an isolated OWASP ZAP daemon.</td>
+    </tr>
+    <tr>
+      <td valign="top" width="35">🧠</td>
+      <td><strong>AI-Powered Alert Triaging:</strong> Evaluates discovered alerts to filter false positives and surface high-confidence vulnerabilities.</td>
+    </tr>
+    <tr>
+      <td valign="top" width="35">🛠️</td>
+      <td><strong>Actionable Code Remediation:</strong> Delivers tailored code solutions (Python, Node.js, PHP, React, etc.) and configuration hardening guides directly inside each vulnerability card.</td>
+    </tr>
+    <tr>
+      <td valign="top" width="35">📊</td>
+      <td><strong>Algorithmic Security Scoring:</strong> Calculates an objective security grade (<code>A+</code> to <code>F</code>) based on weighted risk impacts, displayed on an interactive visual gauge.</td>
+    </tr>
+    <tr>
+      <td valign="top" width="35">🖨️</td>
+      <td><strong>Executive Report Exporting (PDF & JSON):</strong> One-click high-fidelity PDF export featuring an automated print-optimized stylesheet, alongside machine-readable full JSON downloads for compliance and security audit trails.</td>
+    </tr>
+    <tr>
+      <td valign="top" width="35">📜</td>
+      <td><strong>Centralized Reports History (<code>/reports</code>):</strong> Comprehensive scan archive allowing security engineers to review past assessments, track vulnerability posture over time, and inspect or purge historical records.</td>
+    </tr>
+    <tr>
+      <td valign="top" width="35">🔍</td>
+      <td><strong>Deep-Linked Report Inspection:</strong> Direct route loading (<code>/?report_id=...</code>) to revisit and analyze any historical assessment in the full interactive Dashboard.</td>
+    </tr>
+    <tr>
+      <td valign="top" width="35">🖥️</td>
+      <td><strong>Modern Next.js Dashboard:</strong> Built with Next.js and Tailwind CSS, featuring live progress polling, risk charts, quick filtering, hot-reloading development support, and responsive dark-mode styling.</td>
+    </tr>
+    <tr>
+      <td valign="top" width="35">⚙️</td>
+      <td><strong>Configurable LLM Intelligence:</strong> Flexible AI engine supporting dynamic model switching (<code>gpt-4o</code>, <code>gpt-4o-mini</code>, etc.) via environment variables.</td>
+    </tr>
+    <tr>
+      <td valign="top" width="35">🛡️</td>
+      <td><strong>Multi-Tenant User Data Isolation:</strong> Enforces strict Broken Object Level Authorization (BOLA/IDOR) controls so security operators can only access, view, and delete their own vulnerability assessments.</td>
+    </tr>
+    <tr>
+      <td valign="top" width="35">🔐</td>
+      <td><strong>Secure Microservices Architecture:</strong> Zero shared state; all 6 services communicate via an internal Docker bridge network with JWT-secured REST APIs.</td>
+    </tr>
+  </tbody>
+</table>
 
 ---
 
@@ -174,13 +201,26 @@ $$Score = \max\left(0, 100 - \sum (\text{Vulnerability Count} \times \text{Weigh
 
 WebGuard AI provides enterprise-grade reporting workflows to bridge security engineering with executive and compliance teams:
 
-🖨️ **One-Click PDF Export:** Directly from the scan dashboard, click **"Export PDF"** to generate a clean, print-ready document. The custom `@media print` CSS engine automatically converts the dark UI into an executive, high-contrast white layout while omitting interactive buttons and preserving security gauges, charts, and remediation directives.
-
-💾 **Machine-Readable JSON Downloads:** Export full vulnerability payloads—including verified findings, false-positive metrics, severity ratings, and AI-generated remediation patches—for automated ingestion into SIEMs, defect trackers (Jira/GitHub), or compliance archives.
-
-📜 **Centralized Reports Hub (`/reports`):** A dedicated interface to review, search, deep-link, and purge historical assessments stored in MongoDB.
-
-🔍 **Instant Historical Inspection:** Re-open any past scan into the live dashboard with a single click (`👁️ View`) or via direct URL parameter (`/?report_id=...`).
+<table>
+  <tbody>
+    <tr>
+      <td valign="top" width="35">🖨️</td>
+      <td><strong>One-Click PDF Export:</strong> Directly from the scan dashboard, click <strong>"Export PDF"</strong> to generate a clean, print-ready document. The custom <code>@media print</code> CSS engine automatically converts the dark UI into an executive, high-contrast white layout while omitting interactive buttons and preserving security gauges, charts, and remediation directives.</td>
+    </tr>
+    <tr>
+      <td valign="top" width="35">💾</td>
+      <td><strong>Machine-Readable JSON Downloads:</strong> Export full vulnerability payloads—including verified findings, false-positive metrics, severity ratings, and AI-generated remediation patches—for automated ingestion into SIEMs, defect trackers (Jira/GitHub), or compliance archives.</td>
+    </tr>
+    <tr>
+      <td valign="top" width="35">📜</td>
+      <td><strong>Centralized Reports Hub (<code>/reports</code>):</strong> A dedicated interface to review, search, deep-link, and purge historical assessments stored in MongoDB.</td>
+    </tr>
+    <tr>
+      <td valign="top" width="35">🔍</td>
+      <td><strong>Instant Historical Inspection:</strong> Re-open any past scan into the live dashboard with a single click (<code>👁️ View</code>) or via direct URL parameter (<code>/?report_id=...</code>).</td>
+    </tr>
+  </tbody>
+</table>
 
 ---
 
