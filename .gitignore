@@ -48,3 +48,10 @@ coverage/
 .coverage
 htmlcov/
 .pytest_cache/
+
+# ═══════════════════════════════════════
+# Debug Scripts & Scan Output Data
+# ═══════════════════════════════════════
+test_db.py
+reports_output.json
+scans_output.json

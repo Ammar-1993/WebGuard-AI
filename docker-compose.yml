@@ -91,7 +91,12 @@ services:
       - MONGO_URI=mongodb://mongodb:27017/webguard_db
       - AI_SERVICE_URL=http://ai-analyzer:8011
       - SCANNER_SERVICE_URL=http://security-scanner:8012
-      - JWT_SECRET=${JWT_SECRET:-supersecretkey}
+      # لا قيمة افتراضية بعد الآن — docker compose نفسه يرفض الإقلاع إن لم
+      # يُعيَّن JWT_SECRET في .env (طبقة حماية أولى قبل حتى وصول app/core/config.py)
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required — set it in your .env file (see .env.example)}
+      # development (افتراضي محليًا) تسمح بقيمة JWT_SECRET ضعيفة مع تحذير فقط؛
+      # أي قيمة أخرى (production, staging, ...) ترفض الإقلاع فورًا عند ضعف القيمة
+      - ENVIRONMENT=${ENVIRONMENT:-development}
     depends_on:
       mongodb:
         condition: service_healthy

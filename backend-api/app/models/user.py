@@ -2,12 +2,24 @@
 WebGuard AI — User Models (Pydantic Schemas)
 ==============================================
 نماذج بيانات المستخدم: التسجيل، تسجيل الدخول، والـ Token.
+
+ملاحظة أمنية (Security Review — البند 4):
+  كلمة المرور السابقة كانت تقبل 6 أحرف بلا أي شرط تعقيد، مما يجعل
+  الحسابات عرضة للتخمين (خصوصًا مع غياب Rate Limiting سابقًا — تم
+  إصلاحه في البند 3). السياسة الجديدة: 8 أحرف على الأقل، رقم واحد
+  على الأقل، وحرف كبير واحد على الأقل.
+
+  كما أُضيف حد أعلى (max_length=72) لأن bcrypt (المستخدم في
+  core/security.py) يتعامل فعليًا مع أول 72 byte فقط من كلمة المرور —
+  انظر التعليق الموجود في requirements.txt بخصوص تثبيت إصدار bcrypt
+  لهذا السبب تحديدًا. رفض القيم الأطول من ذلك عند الإدخال أوضح
+  للمستخدم من فشل صامت أو خطأ غير متوقع لاحقًا داخل passlib.
 """
 
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 class UserCreate(BaseModel):
@@ -21,9 +33,23 @@ class UserCreate(BaseModel):
     email: EmailStr = Field(..., description="Email")
     password: str = Field(
         ...,
-        min_length=6,
-        description="Password (at least 6 characters)",
+        min_length=8,
+        max_length=72,  # bcrypt يتجاهل ما بعد أول 72 byte — انظر الملاحظة أعلاه
+        description=(
+            "Password (min 8 characters, must include at least one digit "
+            "and one uppercase letter)"
+        ),
     )
+
+    @field_validator("password")
+    @classmethod
+    def validate_password_strength(cls, v: str) -> str:
+        """يتحقق من تعقيد كلمة المرور — لا يكفي الطول وحده."""
+        if not any(c.isdigit() for c in v):
+            raise ValueError("Password must contain at least one digit")
+        if not any(c.isupper() for c in v):
+            raise ValueError("Password must contain at least one uppercase letter")
+        return v
 
     class Config:
         json_schema_extra = {

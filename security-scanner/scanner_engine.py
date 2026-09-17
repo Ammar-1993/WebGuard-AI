@@ -5,7 +5,7 @@ WebGuard AI — Security Scanner Engine (OWASP ZAP Wrapper)
 
 المسؤولية:
   - استقبال رابط الموقع المراد فحصه من الخادم المركزي
-  - التحقق من صلاحية الرابط
+  - التحقق من صلاحية الرابط (وأمانه — انظر SSRF PROTECTION أدناه)
   - تشغيل Spider (اكتشاف الصفحات)
   - تشغيل Active Scan (فحص الثغرات)
   - جمع النتائج وإعادتها بصيغة JSON منظمة
@@ -14,12 +14,49 @@ WebGuard AI — Security Scanner Engine (OWASP ZAP Wrapper)
   الذكاء الاصطناعي لا يُستخدم هنا إطلاقاً.
   هذه الخدمة تعتمد فقط على محرك OWASP ZAP لاكتشاف الثغرات.
 
+═══════════════════════════════════════════════════════════════
+SSRF PROTECTION (Security Review — البند 2.1)
+═══════════════════════════════════════════════════════════════
+هذه الخدمة أداة DAST — استخدامها المشروع الأساسي غالبًا يتضمن فحص أهداف
+داخل شبكات خاصة (مثل OWASP Juice Shop على localhost، أو تطبيقات داخل
+شبكة الشركة). لذلك لا يصح حظر كل عناوين IP الخاصة (RFC1918) بشكل مطلق —
+هذا يكسر الاستخدام الأساسي الموثّق في README نفسه.
+
+الحل هنا مبني على 3 طبقات متدرجة:
+
+  1. حظر دائم (غير قابل للتعطيل) لأسماء خدمات WebGuard AI الداخلية
+     نفسها (mongodb, backend-api, ai-analyzer, security-scanner,
+     owasp-zap) — لا يوجد أي سيناريو DAST مشروع يبرر توجيه فحص أمني
+     نحو البنية التحتية الخاصة بالأداة نفسها.
+
+  2. حظر دائم لعنوان Link-Local (169.254.0.0/16) — يشمل نقطة
+     الـ Cloud Metadata (مثل 169.254.169.254 في AWS/GCP/Azure) التي
+     لا يوجد لها أي استخدام DAST مشروع مطلقًا.
+
+  3. حظر افتراضي (قابل للتفعيل/التعطيل عبر متغير بيئة) لعناوين
+     Private/Loopback العامة — مفعّل بشكل افتراضي (Secure by Default)،
+     ويمكن السماح به فعليًا في بيئات pentesting داخلية موثوقة عبر:
+       SCANNER_ALLOW_PRIVATE_NETWORKS=true
+     أو بإضافة استثناء محدد عبر:
+       SCANNER_ALLOWED_HOSTS=frontend,my-internal-app.local
+
+  قيد معروف (Known Limitation — DNS Rebinding):
+  يتم التحقق بحل اسم الاستضافة (DNS resolution) لحظة الفحص فقط. مهاجم
+  متقدّم يتحكم بخادم DNS يمكنه نظريًا تغيير الاستجابة بين لحظة التحقق
+  ولحظة اتصال ZAP الفعلي (Time-of-Check-to-Time-of-Use). الحل الأكمل
+  لهذا يكون على مستوى الشبكة (عزل شبكي/firewall egress rules على حاوية
+  owasp-zap نفسها) لا على مستوى كود التطبيق فقط — يُنصح به كطبقة إضافية
+  في بيئات إنتاج حساسة.
+
 التشغيل:
   uvicorn scanner_engine:app --host 0.0.0.0 --port 8012
 """
 
+import ipaddress
 import os
+import socket
 import time
+from urllib.parse import urlparse
 
 import requests
 from fastapi import FastAPI, HTTPException, status
@@ -32,7 +69,7 @@ from zapv2 import ZAPv2
 
 app = FastAPI(
     title="WebGuard AI — Security Scanner",
-    version="1.0.0",
+    version="1.1.0",
     description="خدمة الفحص الأمني — OWASP ZAP Wrapper",
 )
 
@@ -47,6 +84,92 @@ zap = ZAPv2(
         "https": ZAP_URL,
     },
 )
+
+
+# ═══════════════════════════════════════════
+#  إعدادات حماية SSRF
+# ═══════════════════════════════════════════
+
+# ─── طبقة 1: أسماء خدمات WebGuard AI الداخلية — حظر دائم غير قابل للتعطيل ───
+ALWAYS_BLOCKED_HOSTNAMES = {
+    "mongodb",
+    "backend-api",
+    "ai-analyzer",
+    "security-scanner",
+    "owasp-zap",
+}
+
+# ─── طبقة 3: هل نسمح بفحص عناوين Private/Loopback بشكل عام؟ ───
+# القيمة الافتراضية False = آمن افتراضيًا. يُفعَّل فقط في بيئات pentesting
+# داخلية موثوقة تعرف أنها تفحص أهدافًا داخل شبكتها عمدًا.
+ALLOW_PRIVATE_NETWORKS = os.getenv("SCANNER_ALLOW_PRIVATE_NETWORKS", "false").lower() == "true"
+
+# ─── استثناءات محددة لأسماء استضافة مسموح بفحصها حتى لو كانت private/loopback ───
+# القيمة الافتراضية "frontend" لأنه الهدف التجريبي الموثّق فعليًا في بيانات
+# المشروع نفسه (سجلات فحص سابقة على frontend:3030 داخل الشبكة الداخلية).
+_default_allowed = "frontend"
+SCANNER_ALLOWED_HOSTS = {
+    h.strip().lower()
+    for h in os.getenv("SCANNER_ALLOWED_HOSTS", _default_allowed).split(",")
+    if h.strip()
+}
+
+
+class SSRFValidationError(Exception):
+    """يُرفع عند رفض هدف الفحص لأسباب أمنية (SSRF)."""
+    def __init__(self, reason: str):
+        self.reason = reason
+        super().__init__(reason)
+
+
+def _is_safe_target(url: str) -> None:
+    """
+    يتحقق من أن رابط الهدف لا يشير إلى بنية WebGuard AI الداخلية أو إلى
+    عنوان محظور دائمًا (مثل Cloud Metadata). يرفع SSRFValidationError عند الرفض.
+
+    لا يرفع خطأ إن كان الهدف عنوان private/loopback عام ومسموح به حسب
+    الإعدادات (SCANNER_ALLOW_PRIVATE_NETWORKS أو SCANNER_ALLOWED_HOSTS).
+    """
+    parsed = urlparse(url)
+    hostname = (parsed.hostname or "").lower()
+
+    if not hostname:
+        raise SSRFValidationError("Could not parse a hostname from the target URL")
+
+    # ─── طبقة 1: أسماء خدمات WebGuard AI الداخلية — حظر دائم ───
+    if hostname in ALWAYS_BLOCKED_HOSTNAMES:
+        raise SSRFValidationError(
+            f"Target hostname '{hostname}' is a WebGuard AI internal service — "
+            "scanning internal infrastructure is never permitted."
+        )
+
+    # ─── حل اسم الاستضافة إلى عنوان IP فعلي ───
+    try:
+        resolved_ip = socket.gethostbyname(hostname)
+    except socket.gaierror as e:
+        raise SSRFValidationError(f"Could not resolve hostname '{hostname}': {e}")
+
+    try:
+        ip_obj = ipaddress.ip_address(resolved_ip)
+    except ValueError:
+        raise SSRFValidationError(f"Resolved address '{resolved_ip}' is not a valid IP")
+
+    # ─── طبقة 2: Link-Local (يشمل Cloud Metadata) — حظر دائم غير قابل للتعطيل ───
+    if ip_obj.is_link_local:
+        raise SSRFValidationError(
+            f"Target resolves to a link-local address ({resolved_ip}) — "
+            "this range includes cloud metadata endpoints and is always blocked."
+        )
+
+    # ─── طبقة 3: Private/Loopback/Reserved — حظر افتراضي، قابل للاستثناء ───
+    is_sensitive_range = ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_reserved
+    if is_sensitive_range and not ALLOW_PRIVATE_NETWORKS and hostname not in SCANNER_ALLOWED_HOSTS:
+        raise SSRFValidationError(
+            f"Target '{hostname}' resolves to a private/internal address ({resolved_ip}). "
+            "Scanning private networks is disabled by default. If this is an authorized "
+            "internal pentesting target, add it to SCANNER_ALLOWED_HOSTS or set "
+            "SCANNER_ALLOW_PRIVATE_NETWORKS=true."
+        )
 
 
 # ═══════════════════════════════════════════
@@ -79,7 +202,7 @@ def _validate_url_reachable(url: str) -> bool:
 def _wait_for_spider(target: str, max_wait: int = 120) -> int:
     """
     يُشغّل Spider لاكتشاف صفحات الموقع وينتظر اكتماله.
-    
+
     Returns:
         عدد الروابط المكتشفة
     """
@@ -131,20 +254,31 @@ def _wait_for_active_scan(target: str, max_wait: int = 300) -> None:
 @app.post(
     "/api/scan",
     summary="بدء فحص أمني",
-    description="يستقبل الرابط → يشغّل ZAP Spider → Active Scan → يُعيد الثغرات المكتشفة.",
+    description="يستقبل الرابط → يتحقق من أمانه (SSRF) → يشغّل ZAP Spider → Active Scan → يُعيد الثغرات المكتشفة.",
 )
 async def run_scan(scan_request: ScanRequest):
     """
     يُنفّذ الفحص الأمني الكامل:
-    1. التحقق من صلاحية الرابط
-    2. فتح الرابط في ZAP
-    3. تشغيل Spider (اكتشاف الصفحات)
-    4. تشغيل Active Scan (فحص الثغرات)
-    5. جمع وإرجاع النتائج
+    1. التحقق من أمان الهدف (SSRF Protection)
+    2. التحقق من صلاحية الرابط
+    3. فتح الرابط في ZAP
+    4. تشغيل Spider (اكتشاف الصفحات)
+    5. تشغيل Active Scan (فحص الثغرات)
+    6. جمع وإرجاع النتائج
     """
     target = str(scan_request.target_url)
 
-    # ─── 1. التحقق من صلاحية الرابط ───
+    # ─── 1. التحقق من أمان الهدف (SSRF) — قبل أي اتصال فعلي بالرابط ───
+    try:
+        _is_safe_target(target)
+    except SSRFValidationError as e:
+        print(f"🚫 SSRF check rejected target: {target} — {e.reason}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Target rejected for security reasons: {e.reason}",
+        )
+
+    # ─── 2. التحقق من صلاحية الرابط ───
     if not _validate_url_reachable(target):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -152,18 +286,18 @@ async def run_scan(scan_request: ScanRequest):
         )
 
     try:
-        # ─── 2. فتح الرابط في ZAP ───
+        # ─── 3. فتح الرابط في ZAP ───
         print(f"🌐 Opening URL in ZAP: {target}")
         zap.urlopen(target)
         time.sleep(2)  # انتظار قصير ليُعالج ZAP الرابط
 
-        # ─── 3. تشغيل Spider ───
+        # ─── 4. تشغيل Spider ───
         urls_found = _wait_for_spider(target)
 
-        # ─── 4. تشغيل Active Scan ───
+        # ─── 5. تشغيل Active Scan ───
         _wait_for_active_scan(target)
 
-        # ─── 5. جمع النتائج ───
+        # ─── 6. جمع النتائج ───
         alerts = zap.core.alerts(baseurl=target, start=0, count=500)
 
         # ─── تنظيف النتائج ───
@@ -214,6 +348,10 @@ async def health():
             "service": "Security Scanner",
             "zap_version": version,
             "zap_url": ZAP_URL,
+            "ssrf_protection": {
+                "allow_private_networks": ALLOW_PRIVATE_NETWORKS,
+                "allowed_hosts": sorted(SCANNER_ALLOWED_HOSTS),
+            },
         }
     except Exception as e:
         return {

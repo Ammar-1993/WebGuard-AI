@@ -105,12 +105,18 @@ export default function Login() {
               <input
                 type="password"
                 required
-                minLength={6}
+                {...(!isLogin ? { minLength: 8, maxLength: 72 } : {})}
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 className="w-full px-4 py-3 bg-cyber-dark/50 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
                 placeholder="••••••••"
               />
+              {/* تلميح السياسة — يظهر فقط عند إنشاء حساب جديد، مطابق للتحقق الفعلي في backend-api/app/models/user.py */}
+              {!isLogin && (
+                <p className="text-xs text-gray-500 mt-1.5">
+                  8+ characters, at least one digit and one uppercase letter
+                </p>
+              )}
             </div>
 
             {/* Submit Button */}

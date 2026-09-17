@@ -2,14 +2,21 @@
 WebGuard AI — Authentication API Routes
 =========================================
 مسارات تسجيل المستخدمين وتسجيل الدخول وإصدار JWT tokens.
+
+ملاحظة أمنية (Security Review — البند 3):
+  /login و /register محميان بـ Rate Limiting (slowapi) لمنع هجمات
+  Brute Force / Credential Stuffing على /login، وإنشاء حسابات مزيفة
+  بالجملة على /register. القيم قابلة للضبط عبر app/core/rate_limit.py
+  أو متغيرات البيئة LOGIN_RATE_LIMIT / REGISTER_RATE_LIMIT.
 """
 
 from datetime import datetime, timezone
 
 from bson import ObjectId
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from app.core.database import get_collection
+from app.core.rate_limit import limiter, LOGIN_RATE_LIMIT, REGISTER_RATE_LIMIT
 from app.core.security import hash_password, verify_password, create_access_token, get_current_user
 from app.models.user import UserCreate, UserLogin, UserResponse, TokenResponse
 
@@ -23,7 +30,8 @@ router = APIRouter(prefix="/api/auth", tags=["🔐 Authentication"])
     summary="Register new user",
     description="Creates a new user account and issues a JWT Token.",
 )
-async def register(user_data: UserCreate):
+@limiter.limit(REGISTER_RATE_LIMIT)
+async def register(request: Request, user_data: UserCreate):
     """تسجيل مستخدم جديد في النظام."""
     users = get_collection("users")
 
@@ -75,7 +83,8 @@ async def register(user_data: UserCreate):
     summary="Login",
     description="Verifies user credentials and issues a new JWT Token.",
 )
-async def login(credentials: UserLogin):
+@limiter.limit(LOGIN_RATE_LIMIT)
+async def login(request: Request, credentials: UserLogin):
     """تسجيل دخول المستخدم وإصدار token جديد."""
     users = get_collection("users")
 
@@ -137,4 +146,3 @@ async def get_me(current_user: dict = Depends(get_current_user)):
         email=user["email"],
         created_at=user["created_at"],
     )
-
