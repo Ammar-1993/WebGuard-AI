@@ -105,7 +105,7 @@ graph TB
     end
 ```
 
-### Microservices Specifications
+### 📦 Microservices Specifications
 
 | Container Name | Service Role | Stack | Port | Description |
 | :--- | :--- | :--- | :--- | :--- |
@@ -175,7 +175,7 @@ WebGuard AI assesses the target application's security posture using a determini
 
 $$Score = \max\left(0, 100 - \sum (\text{Vulnerability Count} \times \text{Weight})\right)$$
 
-### Risk Penalty Weights
+### ⚖️ Risk Penalty Weights
 
 | Vulnerability Severity | Impact Weight | Rationale |
 | :--- | :---: | :--- |
@@ -184,7 +184,7 @@ $$Score = \max\left(0, 100 - \sum (\text{Vulnerability Count} \times \text{Weigh
 | **Low** | `-3 pts` | Configuration weaknesses, missing clickjacking protections, or info leaks. |
 | **Informational** | `-1 pt` | Low-impact observations, timestamp disclosures, or header suggestions. |
 
-### Posture Grade Scale
+### 📊 Posture Grade Scale
 
 | Score Range | Grade | Posture Badge | Definition |
 | :---: | :---: | :---: | :--- |
@@ -316,20 +316,20 @@ webguard-frontend      webguard-frontend          Up                     0.0.0.0
 
 The Backend Gateway provides secure, token-authenticated RESTful endpoints:
 
-### Authentication (`/api/auth`)
+### 🔐 Authentication (`/api/auth`)
 | Method | Endpoint | Description | Access Level |
 | :---: | :--- | :--- | :---: |
 | `POST` | `/api/auth/register` | Register a new security operator account | `🌐 Public` |
 | `POST` | `/api/auth/login` | Authenticate credentials and receive JWT bearer token | `🌐 Public` |
 | `GET` | `/api/auth/me` | Fetch active authenticated profile details | `🔒 Protected` |
 
-### Security Scans (`/api/scan`)
+### 🎯 Security Scans (`/api/scan`)
 | Method | Endpoint | Description | Access Level |
 | :---: | :--- | :--- | :---: |
 | `POST` | `/api/scan` | Trigger a new asynchronous DAST scan pipeline | `🔒 Protected` |
 | `GET` | `/api/scan/{scan_id}` | Poll real-time scan progress, status & findings | `🔒 Protected` |
 
-### Security Reports (`/api/reports`)
+### 📑 Security Reports (`/api/reports`)
 | Method | Endpoint | Description | Access Level |
 | :---: | :--- | :--- | :---: |
 | `GET` | `/api/reports` | List all historical reports for active user (sorted descending) | `🔒 Protected` |
