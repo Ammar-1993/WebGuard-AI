@@ -13,22 +13,41 @@ Brute Force / Credential Stuffing (Security Review — البند 3).
 
 القيم قابلة للضبط عبر متغيرات بيئة دون تعديل الكود.
 
-قيد معروف (Known Limitation — التخزين):
-  التخزين الافتراضي هنا في الذاكرة (in-memory)، ويعمل بشكل صحيح فقط
-  عندما تعمل نسخة واحدة من backend-api (وهو وضع docker-compose.yml
-  الحالي — بدون replicas). لو تم توسيع الخدمة لعدة نسخ خلف موازن حمل،
-  يجب الانتقال لتخزين مشترك (مثل Redis) عبر تمرير storage_uri عند
-  إنشاء Limiter، حتى تُطبَّق الحدود على مستوى كل الحاويات معًا بدل كل
-  حاوية منفردة.
+التخزين المشترك (Distributed Rate Limiting — Priority 4):
+  يتم تخزين عدادات الـ Rate Limiting في Redis عبر storage_uri لتتبع
+  محاولات تسجيل الدخول وإنشاء الحسابات بشكل موحد وتراكمي عبر جميع
+  نسخ الحاوية (Container Replicas) في بيئة التوسع الأفقي (Horizontal Scaling).
 """
 
+import logging
 import os
 
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
-# ─── Limiter المركزي — المفتاح هو عنوان IP الخاص بالطالب ───
-limiter = Limiter(key_func=get_remote_address)
+logger = logging.getLogger("webguard-ratelimit")
+
+# ─── قراءة إعدادات التخزين المشترك من البيئة ───
+REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379/0")
+
+# ─── Limiter المركزي — التخزين الموزع عبر Redis ───
+# المفتاح الأساسي هو عنوان IP الخاص بالطالب (get_remote_address)
+# ويتم تخزين وتتبع العدادات في Redis لضمان عدم تجاوز الحدود عند تعدد الحاويات
+if REDIS_URL:
+    try:
+        limiter = Limiter(
+            key_func=get_remote_address,
+            storage_uri=REDIS_URL,
+        )
+        logger.info("Initialized distributed rate limiter with Redis backend (%s)", REDIS_URL)
+    except Exception as e:
+        logger.warning(
+            "Could not initialize Redis storage for rate limiter: %s. Falling back to in-memory storage.",
+            e,
+        )
+        limiter = Limiter(key_func=get_remote_address)
+else:
+    limiter = Limiter(key_func=get_remote_address)
 
 # ─── حدود قابلة للضبط عبر البيئة (بصيغة slowapi: "عدد/وحدة الزمن") ───
 LOGIN_RATE_LIMIT = os.getenv("LOGIN_RATE_LIMIT", "5/minute")
