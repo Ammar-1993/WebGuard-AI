@@ -401,12 +401,6 @@ docker compose logs -f backend-api
 
 ---
 
-## 📄 License
-
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
-
----
-
 ## 👤 Author
 
 <div align="center">
@@ -416,3 +410,9 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
     <a href="mailto:ammaralnggar@gmail.com"><img src="https://img.shields.io/badge/Email-ammaralnggar@gmail.com-D14836?style=flat-square&logo=gmail&logoColor=white" alt="Email" /></a>
   </p>
 </div>
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
