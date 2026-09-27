@@ -115,26 +115,66 @@ WebGuard AI operates as a containerized microservices ecosystem consisting of **
 
 ```mermaid
 graph TB
-    User([Security Engineer / Developer]) -->|HTTP / Port 3030| Frontend[Next.js Frontend Dashboard]
-    User -.->|Direct API Access / Port 8010| Backend[FastAPI Backend Gateway]
+    %% External Actors & Targets
+    User([👨‍💻 Security Operator / Developer])
+    TargetWebsite[🌐 Target Web Application]
+    OpenAIAPI[☁️ OpenAI Cloud API<br/><b>GPT-4o</b>]
 
-    subgraph DockerNet ["Docker Container Ecosystem (webguard_net)"]
-        Frontend -->|REST API + Bearer JWT / Port 8010| Backend
+    %% Main Docker Network
+    subgraph DockerNet ["🐳 Docker Container Ecosystem (webguard_net)"]
         
-        Backend -->|Motor Async / Port 27017| MongoDB[(MongoDB 6.0 Database)]
-        Backend -->|Async Redis / Port 6379| Redis[(Redis In-Memory Cache & Lock)]
-        
-        Backend -->|HTTP POST / Port 8012| ScannerAPI[Security Scanner Service]
-        ScannerAPI -->|ZAP API Wrapper / Port 8092| ZAPEngine[OWASP ZAP Core Engine]
-        
-        Backend -->|HTTP POST / Port 8011| AIAnalyzer[AI Analyzer Service]
-        AIAnalyzer -->|Async Redis / Port 6379| Redis
+        subgraph PresentationLayer ["1. Presentation & API Gateway Tier"]
+            Frontend["🖥️ <b>webguard-frontend</b><br/>Next.js 16 • React 19 • Tailwind<br/><code>Port 3030</code>"]
+            Backend["🛡️ <b>webguard-backend</b><br/>FastAPI Gateway • JWT Auth • Scoring<br/><code>Port 8010</code>"]
+        end
+
+        subgraph StorageLayer ["2. Distributed State & Storage Tier"]
+            Redis[("⚡ <b>webguard-redis</b><br/>Redis 7 (Alpine)<br/>• Distributed Scan Locks<br/>• Global Rate Limiting<br/>• 7-Day AI Response Cache<br/><code>Internal 6379 / Host 6399</code>")]
+            MongoDB[("🍃 <b>webguard-mongodb</b><br/>MongoDB 6.0<br/>• Scans, Users, Reports<br/>• BOLA/IDOR Scoped Docs<br/><code>Port 27017</code>")]
+        end
+
+        subgraph DASTLayer ["3. Automated DAST Scanning Tier"]
+            ScannerAPI["⚙️ <b>webguard-scanner-api</b><br/>FastAPI • Python 3.10 • zapv2<br/><code>Port 8012</code>"]
+            ZAPEngine["🕷️ <b>webguard-zap-engine</b><br/>OWASP ZAP 2.14+ Daemon<br/>Spider & Active Payload Engine<br/><code>Port 8092</code>"]
+        end
+
+        subgraph AILayer ["4. Cognitive Intelligence Tier"]
+            AIAnalyzer["🧠 <b>webguard-ai-api</b><br/>FastAPI • LangChain • Prompt Engine<br/>False-Positive Triage & Code Fixes<br/><code>Port 8011</code>"]
+        end
+
     end
 
-    subgraph External ["External Network & Cloud Services (Internet)"]
-        ZAPEngine -->|Outbound Active Scan & Spider| TargetWebsite[Target Web Application]
-        AIAnalyzer -->|HTTPS Outbound / LangChain| OpenAIAPI[OpenAI Cloud API GPT-4o]
-    end
+    %% User & External Interactions
+    User -->|HTTP / Browser UI| Frontend
+    User -.->|Direct REST API / JWT| Backend
+    ZAPEngine -->|Active Crawl & Payload Injection| TargetWebsite
+    AIAnalyzer -->|HTTPS / Prompt Batches| OpenAIAPI
+
+    %% Internal Communication & Data Flows
+    Frontend -->|REST API + Bearer JWT| Backend
+    Backend <-->|Motor Async / CRUD| MongoDB
+    Backend <-->|Atomic Locks & Rate Limits| Redis
+    Backend -->|Async Scan Dispatch| ScannerAPI
+    ScannerAPI -->|ZAP Client Automation| ZAPEngine
+    Backend -->|Raw Alerts Payload| AIAnalyzer
+    AIAnalyzer <-->|Check & Store Cached Analysis| Redis
+
+    %% Styling for Modern Visual Appearance
+    classDef client fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
+    classDef gateway fill:#0f172a,stroke:#3b82f6,stroke-width:2px,color:#f8fafc;
+    classDef storage fill:#1e1b4b,stroke:#818cf8,stroke-width:2px,color:#f8fafc;
+    classDef redis fill:#450a0a,stroke:#ef4444,stroke-width:2px,color:#f8fafc;
+    classDef scanner fill:#1c1917,stroke:#f59e0b,stroke-width:2px,color:#f8fafc;
+    classDef ai fill:#022c22,stroke:#10b981,stroke-width:2px,color:#f8fafc;
+    classDef external fill:#18181b,stroke:#a1a1aa,stroke-width:1px,stroke-dasharray: 4 4,color:#f8fafc;
+
+    class User,Frontend client;
+    class Backend gateway;
+    class MongoDB storage;
+    class Redis redis;
+    class ScannerAPI,ZAPEngine scanner;
+    class AIAnalyzer ai;
+    class TargetWebsite,OpenAIAPI external;
 ```
 
 ### 📦 Microservices Specifications
@@ -156,64 +196,84 @@ graph TB
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Operator
-    participant UI as Next.js Dashboard
-    participant BE as FastAPI Gateway
-    participant RD as Redis (Cache & Lock)
-    participant DB as MongoDB Store
-    participant SC as Scanner Service
-    participant ZAP as OWASP ZAP
-    participant AI as AI Analyzer
-    participant OAI as OpenAI (GPT-4o)
+    actor User as 👨‍💻 Operator
+    participant UI as 🖥️ Next.js Dashboard
+    participant BE as 🛡️ FastAPI Gateway
+    participant RD as ⚡ Redis (Cache & Lock)
+    participant DB as 🍃 MongoDB Store
+    participant SC as ⚙️ Scanner Bridge
+    participant ZAP as 🕷️ OWASP ZAP
+    participant AI as 🧠 AI Analyzer
+    participant OAI as ☁️ OpenAI (GPT-4o)
 
     User->>UI: Submit Target URL (e.g., https://target.com)
     UI->>BE: POST /api/scan { target_url }
     
-    Note over BE,RD: Distributed Concurrency Check
-    BE->>RD: SET lock:scan:<url> <scan_id> NX EX 900
-    alt Lock already held by another scan
+    rect rgb(30, 20, 20)
+    Note over BE,RD: 🔒 Phase 0: Distributed Concurrency Lock
+    BE->>RD: SET lock:scan:<normalized_url> <scan_id> NX EX 900
+    alt Lock already held (Scan running for this URL)
         RD-->>BE: False (Lock exists)
         BE-->>UI: 409 Conflict ("Scan already in progress")
-    else Lock acquired successfully
-        RD-->>BE: True (Lock acquired)
-        BE->>DB: Insert Scan Record (PENDING, user_id)
-        BE-->>UI: 202 Accepted { scan_id }
-        
-        Note over BE,ZAP: Stage 1: Automated Vulnerability Discovery
-        BE->>SC: POST /api/scan { target_url }
-        SC->>ZAP: Run Spider & Active Scan
-        ZAP-->>SC: Raw Findings & Vulnerability Alerts
-        SC-->>BE: Return Alerts Payload (JSON)
-
-        Note over BE,OAI: Stage 2: AI Cognitive Triage & Caching
-        BE->>AI: POST /api/analyze { alerts }
-        AI->>RD: Multi-Get cache:alert:<sha256>
-        alt All alerts found in Cache (Hit)
-            RD-->>AI: Return Cached Analyses (0.037s)
-        else Uncached alerts present (Miss)
-            RD-->>AI: Return partial matches
-            AI->>OAI: Triage uncached alerts with GPT-4o
-            OAI-->>AI: Enriched Analysis & Code Patches
-            AI->>RD: Cache new findings (TTL: 7 Days)
-        end
-        AI-->>BE: Return Validated Security Analysis
-
-        Note over BE,DB: Stage 3: Scoring & Tenant Persistence
-        BE->>BE: Compute Algorithmic Score & Grade (0–100)
-        BE->>DB: Save Final Report (scoped to user_id)
-        BE->>RD: Release lock:scan:<url>
-        
-        loop Polling Every 3s
-            UI->>BE: GET /api/scan/{scan_id}
-            BE-->>UI: Return Status & Progress
-        end
-
-        UI->>BE: GET /api/reports/{scan_id}
-        BE->>DB: Query User Report (user_id)
-        DB-->>BE: Return Report Document
-        BE-->>UI: Return Full Report Payload
-        UI-->>User: Render Interactive Dashboard (Ready for PDF / JSON Export)
+    else Lock acquired
+        RD-->>BE: True (Lock OK)
     end
+    end
+
+    BE->>DB: Insert Scan Record (status: PENDING, progress: 0%)
+    BE-->>UI: 202 Accepted { scan_id }
+    
+    par Background Scan Pipeline (Async BackgroundTasks)
+        rect rgb(20, 25, 35)
+        Note over BE,ZAP: 🕷️ Phase 1: Automated DAST Crawl & Attack
+        BE->>DB: Update Status: SCANNING (10%)
+        BE->>SC: POST /api/scan { target_url }
+        SC->>ZAP: Trigger Spider & Active Scan
+        ZAP-->>SC: Discovered Vulnerabilities & Alerts
+        SC-->>BE: Raw Alerts Payload (JSON)
+        BE->>DB: Update Status: SCANNING (50%)
+        end
+
+        rect rgb(20, 35, 25)
+        Note over BE,OAI: 🧠 Phase 2: AI Cognitive Triage & Caching
+        BE->>DB: Update Status: ANALYZING (60%)
+        BE->>AI: POST /api/analyze { alerts }
+        AI->>AI: Generate SHA-256 Fingerprint for each alert
+        AI->>RD: Multi-Get cache:alert:<sha256>
+        
+        alt Cache Hit (Alert already analyzed)
+            RD-->>AI: Return Cached Analysis (0.037s / 0 Tokens)
+        else Cache Miss (New finding)
+            AI->>OAI: Triage & generate code fix with GPT-4o
+            OAI-->>AI: Enriched Analysis & Code Patches
+            AI->>RD: Store in Redis (TTL: 7 Days)
+        end
+        AI-->>BE: Validated Security Analysis Payload
+        BE->>DB: Update Status: ANALYZING (85%)
+        end
+
+        rect rgb(30, 25, 20)
+        Note over BE,DB: 📊 Phase 3: Scoring, Persistence & Lock Release
+        BE->>BE: Calculate Security Score & Grade (0–100)
+        BE->>DB: Save Final Report Document
+        BE->>DB: Update Status: COMPLETED (100%)
+        BE->>RD: Release lock:scan:<url> (finally block guarantee)
+        end
+    and Frontend Real-Time Polling
+        loop Every 3 seconds (while PENDING / SCANNING / ANALYZING)
+            UI->>BE: GET /api/scan/{scan_id}
+            BE->>DB: Read current progress & status
+            DB-->>BE: Status record
+            BE-->>UI: 200 OK { status, progress, message }
+        end
+    end
+
+    Note over UI,User: 🎯 Pipeline Completion & Inspection
+    UI->>BE: GET /api/reports/{scan_id}
+    BE->>DB: Query User-Scoped Report
+    DB-->>BE: Report Document
+    BE-->>UI: Full Report Payload (Score, Findings, Code Fixes)
+    UI-->>User: Render Interactive Dashboard (Ready for PDF / JSON Export)
 ```
 
 ---
