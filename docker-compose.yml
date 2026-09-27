@@ -71,6 +71,10 @@ services:
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o}
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
     networks:
       - webguard_net
 
@@ -89,6 +93,7 @@ services:
       - ./backend-api:/app
     environment:
       - MONGO_URI=mongodb://mongodb:27017/webguard_db
+      - REDIS_URL=redis://redis:6379/0
       - AI_SERVICE_URL=http://ai-analyzer:8011
       - SCANNER_SERVICE_URL=http://security-scanner:8012
       # لا قيمة افتراضية بعد الآن — docker compose نفسه يرفض الإقلاع إن لم
@@ -99,6 +104,8 @@ services:
       - ENVIRONMENT=${ENVIRONMENT:-development}
     depends_on:
       mongodb:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       ai-analyzer:
         condition: service_started
@@ -126,6 +133,24 @@ services:
       - /app/.next
     depends_on:
       - backend-api
+    networks:
+      - webguard_net
+
+  # ==========================================
+  # 7. خدمة التخزين المؤقت (Redis In-Memory Cache)
+  # ==========================================
+  redis:
+    image: redis:alpine
+    container_name: webguard-redis
+    restart: unless-stopped
+    ports:
+      - "6399:6379" # المنفذ المعتمد: 6399 على المضيف لتفادي التعارض مع مشاريع أخرى
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
     networks:
       - webguard_net
 
