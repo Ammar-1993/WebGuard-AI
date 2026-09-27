@@ -5,3 +5,4 @@ langchain-openai>=0.0.2     # أداة الربط الرسمية بين LangChai
 openai>=1.0.0               # مكتبة OpenAI الرسمية للتخاطب مع نموذج GPT
 pydantic>=2.4.0             # للتحقق من هيكل البيانات الواردة
 python-dotenv>=1.0.0        # لقراءة مفتاح OPENAI_API_KEY بأمان
+redis>=5.0.0                # للاتصال غير المتزامن بـ Redis والتخزين المؤقت (Application Caching)
