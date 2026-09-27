@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Next.js](https://img.shields.io/badge/Next.js-14+-000000.svg?logo=next.js&logoColor=white)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16+-000000.svg?logo=next.js&logoColor=white)](https://nextjs.org/)
 [![Docker](https://img.shields.io/badge/Docker-Compose_V2-2496ED.svg?logo=docker&logoColor=white)](https://www.docker.com/)
 [![OWASP ZAP](https://img.shields.io/badge/Engine-OWASP_ZAP_2.14+-00549E.svg?logo=owasp&logoColor=white)](https://www.zaproxy.org/)
 [![LangChain](https://img.shields.io/badge/Orchestrator-LangChain-1C3C3C.svg?logo=chainlink&logoColor=white)](https://www.langchain.com/)
@@ -109,7 +109,7 @@ graph TB
 
 | Container Name | Service Role | Stack | Port | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| `webguard-frontend` | **User Interface** | Next.js 14, React, Tailwind CSS | `3030` | Modern responsive web UI & interactive security dashboard |
+| `webguard-frontend` | **User Interface** | Next.js 16, React 19, Tailwind CSS | `3030` | Modern responsive web UI & interactive security dashboard |
 | `webguard-backend` | **Central Gateway** | FastAPI, Python 3.11, Motor (Async) | `8010` | Authentication, pipeline orchestrator, scoring, & DB CRUD |
 | `webguard-scanner-api` | **Scanner Bridge** | FastAPI, Python 3.11, `zapv2` | `8012` | Manages target validation, Spider crawls, and Active Scans |
 | `webguard-zap-engine` | **Core DAST Engine** | OWASP ZAP Stable Daemon | `8092` | Automated web crawler and active security vulnerability scanner |
@@ -226,7 +226,7 @@ WebGuard AI provides enterprise-grade reporting workflows to bridge security eng
 
 ## 🛠️ Tech Stack
 
-- **Frontend:** Next.js (Pages Router & Turbopack), React 19, Tailwind CSS, Recharts.
+- **Frontend:** Next.js 16 (Pages Router & Turbopack), React 19, Tailwind CSS, Recharts.
 - **Backend Services:** FastAPI, Python 3.11, Pydantic v2, Motor (Async MongoDB), PyJWT, Passlib (bcrypt).
 - **Scanner Engine:** OWASP ZAP (Zed Attack Proxy) 2.14+, `zapv2` Python Client.
 - **AI & Intelligence:** LangChain, OpenAI API (configurable via `OPENAI_MODEL`, supporting `gpt-4o` / `gpt-4o-mini`), Structured JSON Outputs.
