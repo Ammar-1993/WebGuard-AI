@@ -10,3 +10,4 @@ bcrypt==3.2.2           # (FIX) تثبيت الإصدار لمنع خطأ 72-byt
 python-jose[cryptography]>=3.3.0  # لإنشاء والتحقق من JWT tokens
 email-validator>=2.0.0  # للتحقق من صحة عناوين البريد الإلكتروني (EmailStr)
 slowapi>=0.1.9          # (NEW) Rate Limiting لحماية /api/auth/login و /register من Brute Force
+redis>=5.0.0            # للاتصال غير المتزامن بـ Redis (Distributed Locks & Caching)

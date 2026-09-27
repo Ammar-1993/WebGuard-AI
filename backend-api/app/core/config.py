@@ -50,6 +50,7 @@ class Settings(BaseSettings):
     # ─── عناوين الخدمات الداخلية ───
     AI_SERVICE_URL: str = "http://ai-analyzer:8011"
     SCANNER_SERVICE_URL: str = "http://security-scanner:8012"
+    REDIS_URL: str = "redis://redis:6379/0"
 
     # ─── الأمان والمصادقة ───
     # لا توجد قيمة افتراضية آمنة ممكنة لسر توقيع JWT — يجب أن تُقرأ من البيئة.

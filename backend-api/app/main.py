@@ -18,6 +18,7 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from app.core.config import get_settings
 from app.core.database import connect_db, close_db
+from app.core.redis import connect_redis, close_redis
 from app.core.rate_limit import limiter
 from app.api import auth, scan, reports
 
@@ -30,12 +31,13 @@ from app.api import auth, scan, reports
 async def lifespan(app: FastAPI):
     """
     يُدير دورة حياة التطبيق:
-    - عند البدء: يتصل بقاعدة البيانات
-    - عند الإغلاق: يُغلق الاتصال بشكل نظيف
+    - عند البدء: يتصل بقاعدة البيانات وبـ Redis
+    - عند الإغلاق: يُغلق الاتصالات بشكل نظيف
     """
     # ─── Startup ───
     print("🚀 Starting WebGuard AI Backend...")
     await connect_db()
+    await connect_redis()
 
     # ─── ربط التقارير السابقة بمستخدميها إن وجدت ───
     try:
@@ -63,6 +65,7 @@ async def lifespan(app: FastAPI):
     # ─── Shutdown ───
     print("🛑 Stopping server...")
     await close_db()
+    await close_redis()
     print("👋 Server stopped successfully")
 
 
@@ -149,14 +152,24 @@ async def health_check():
     """نقطة فحص صحة الخادم — تُستخدم من Docker و monitoring."""
     from app.services.scanner_client import check_scanner_health
     from app.services.ai_client import check_ai_health
+    from app.core.redis import get_redis
 
     scanner_ok = await check_scanner_health()
     ai_ok = await check_ai_health()
+
+    redis_ok = False
+    try:
+        r = await get_redis()
+        if r and await r.ping():
+            redis_ok = True
+    except Exception:
+        redis_ok = False
 
     return {
         "status": "ok",
         "services": {
             "database": "connected",
+            "redis": "connected" if redis_ok else "unavailable",
             "scanner": "available" if scanner_ok else "unavailable",
             "ai_analyzer": "available" if ai_ok else "unavailable",
         },

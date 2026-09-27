@@ -12,6 +12,7 @@ from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 
 from app.core.database import get_collection
+from app.core.redis import acquire_scan_lock, release_scan_lock
 from app.core.security import get_current_user
 from app.models.scan import ScanRequest, ScanStatus, ScanStatusResponse
 from app.services import scanner_client, ai_client
@@ -137,6 +138,10 @@ async def _run_scan_pipeline(scan_id: str, target_url: str, user_id: str = None)
                 "completed_at": datetime.now(timezone.utc),
             }},
         )
+    finally:
+        # ─── تحرير القفل الموزع (Distributed Lock Release) ───
+        # يتم تحرير القفل بأمان دائماً سواء اكتمل الفحص أو فشل
+        await release_scan_lock(target_url, scan_id)
 
 
 @router.post(
@@ -152,11 +157,24 @@ async def start_new_scan(
     current_user: dict = Depends(get_current_user),
 ):
     """يبدأ فحصاً أمنياً جديداً ويُعيد معرّف الفحص فوراً."""
+    target_url_str = str(scan_request.target_url)
+    scan_id = str(ObjectId())
+
+    # ─── فحص وحيازة القفل الموزع (Distributed Lock) ───
+    # منع تشغيل أكثر من فحص متزامن لنفس الرابط عبر مختلف نسخ الخادم
+    acquired = await acquire_scan_lock(target_url_str, scan_id)
+    if not acquired:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"A security scan for '{target_url_str}' is currently in progress. Please wait until it completes.",
+        )
+
     scans = get_collection("scans")
 
     # ─── إنشاء سجل الفحص في قاعدة البيانات ───
     scan_doc = {
-        "target_url": str(scan_request.target_url),
+        "_id": ObjectId(scan_id),
+        "target_url": target_url_str,
         "status": ScanStatus.PENDING,
         "progress": 0,
         "message": "Request received — waiting to start...",
@@ -164,21 +182,26 @@ async def start_new_scan(
         "created_at": datetime.now(timezone.utc),
         "completed_at": None,
     }
-    result = await scans.insert_one(scan_doc)
-    scan_id = str(result.inserted_id)
+
+    try:
+        await scans.insert_one(scan_doc)
+    except Exception:
+        # تحرير القفل فوراً في حال حدوث أي استثناء أثناء الحفظ في قاعدة البيانات
+        await release_scan_lock(target_url_str, scan_id)
+        raise
 
     # ─── بدء خط الأنابيب في الخلفية ───
     background_tasks.add_task(
         _run_scan_pipeline,
         scan_id,
-        str(scan_request.target_url),
+        target_url_str,
         current_user["user_id"],
     )
 
     return ScanStatusResponse(
         scan_id=scan_id,
         status=ScanStatus.PENDING,
-        target_url=str(scan_request.target_url),
+        target_url=target_url_str,
         progress=0,
         message="Request received — scan will start shortly...",
         created_at=scan_doc["created_at"],
