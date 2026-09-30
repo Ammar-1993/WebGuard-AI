@@ -55,3 +55,8 @@ htmlcov/
 test_db.py
 reports_output.json
 scans_output.json
+
+# ═══════════════════════════════════════
+# Agents 
+# ═══════════════════════════════════════
+.agents/
