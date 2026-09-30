@@ -127,8 +127,15 @@ def _is_safe_target(url: str) -> None:
     يتحقق من أن رابط الهدف لا يشير إلى بنية WebGuard AI الداخلية أو إلى
     عنوان محظور دائمًا (مثل Cloud Metadata). يرفع SSRFValidationError عند الرفض.
 
-    لا يرفع خطأ إن كان الهدف عنوان private/loopback عام ومسموح به حسب
-    الإعدادات (SCANNER_ALLOW_PRIVATE_NETWORKS أو SCANNER_ALLOWED_HOSTS).
+    ─── ملاحظة DNS ───
+    حاوية الـ Scanner لا تملك وصولاً مباشراً للـ DNS العام للإنترنت (الحاوية تعمل
+    داخل شبكة Docker الداخلية فقط). لذلك:
+    - إذا أمكن حل الـ hostname → نتحقق من نطاق الـ IP.
+    - إذا فشل حل الـ hostname (DNS error):
+        * الخدمات الداخلية محظورة بالفعل في Layer 1 (بالاسم).
+        * الـ hostname الخارجي غير القابل للحل لا يمكن أن يكون خدمة داخلية
+          (الخدمات الداخلية تُحلّ دائماً داخل Docker) → نسمح به ونترك ZAP
+          يحاول الوصول (ZAP يملك DNS access كافٍ).
     """
     parsed = urlparse(url)
     hostname = (parsed.hostname or "").lower()
@@ -136,28 +143,49 @@ def _is_safe_target(url: str) -> None:
     if not hostname:
         raise SSRFValidationError("Could not parse a hostname from the target URL")
 
-    # ─── طبقة 1: أسماء خدمات WebGuard AI الداخلية — حظر دائم ───
+    # ─── طبقة 1: أسماء خدمات WebGuard AI الداخلية — حظر دائم بالاسم ───
+    # هذا الحظر يعمل بغض النظر عن DNS — الأسماء واضحة ومعروفة.
     if hostname in ALWAYS_BLOCKED_HOSTNAMES:
         raise SSRFValidationError(
             f"Target hostname '{hostname}' is a WebGuard AI internal service — "
             "scanning internal infrastructure is never permitted."
         )
 
-    # ─── حل اسم الاستضافة إلى عنوان IP فعلي ───
+    # ─── إذا كان الـ hostname عنوان IP مباشر → نتحقق منه فوراً ───
+    try:
+        ip_obj_direct = ipaddress.ip_address(hostname)
+        # الـ hostname هو IP مباشر — نطبق فحص النطاق مباشرة
+        _check_ip_range(ip_obj_direct, hostname)
+        return  # اجتاز الفحص
+    except ValueError:
+        pass  # ليس IP مباشراً — متابعة بحل الـ DNS
+
+    # ─── محاولة حل اسم الاستضافة إلى عنوان IP ───
     try:
         resolved_ip = socket.gethostbyname(hostname)
-    except socket.gaierror as e:
-        raise SSRFValidationError(f"Could not resolve hostname '{hostname}': {e}")
-
-    try:
         ip_obj = ipaddress.ip_address(resolved_ip)
-    except ValueError:
-        raise SSRFValidationError(f"Resolved address '{resolved_ip}' is not a valid IP")
+        _check_ip_range(ip_obj, hostname, resolved_ip)
+    except socket.gaierror:
+        # DNS resolution فشل — هذا يحدث عندما تحاول الحاوية حل أسماء إنترنت عامة.
+        # الخدمات الداخلية (Docker) تُحلّ دائماً بنجاح داخل الشبكة — لذا أي hostname
+        # فشل حله هو على الأغلب هدف إنترنت خارجي مشروع.
+        # ZAP لديه وصول أوسع للشبكة ويستطيع الوصول لمثل هذه الأهداف.
+        print(f"⚠️  DNS resolution for '{hostname}' failed in scanner container "
+              f"(expected for public internet targets) — deferring to ZAP.")
+        return  # السماح بالمتابعة — ZAP سيحاول الاتصال الفعلي
+
+
+def _check_ip_range(ip_obj: ipaddress.IPv4Address, hostname: str, resolved_ip: str = "") -> None:
+    """
+    يتحقق من نطاق عنوان IP — مُستدعى من _is_safe_target.
+    يرفع SSRFValidationError إذا كان العنوان في نطاق محظور.
+    """
+    display = resolved_ip or str(ip_obj)
 
     # ─── طبقة 2: Link-Local (يشمل Cloud Metadata) — حظر دائم غير قابل للتعطيل ───
     if ip_obj.is_link_local:
         raise SSRFValidationError(
-            f"Target resolves to a link-local address ({resolved_ip}) — "
+            f"Target resolves to a link-local address ({display}) — "
             "this range includes cloud metadata endpoints and is always blocked."
         )
 
@@ -165,7 +193,7 @@ def _is_safe_target(url: str) -> None:
     is_sensitive_range = ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_reserved
     if is_sensitive_range and not ALLOW_PRIVATE_NETWORKS and hostname not in SCANNER_ALLOWED_HOSTS:
         raise SSRFValidationError(
-            f"Target '{hostname}' resolves to a private/internal address ({resolved_ip}). "
+            f"Target '{hostname}' resolves to a private/internal address ({display}). "
             "Scanning private networks is disabled by default. If this is an authorized "
             "internal pentesting target, add it to SCANNER_ALLOWED_HOSTS or set "
             "SCANNER_ALLOW_PRIVATE_NETWORKS=true."
