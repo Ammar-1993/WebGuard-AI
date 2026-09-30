@@ -64,6 +64,13 @@ body {
   100% { background-position: 200% 0; }
 }
 
+/* ─── نبضة الرقم المئوي عند كل تحديث من الـ Backend ─── */
+@keyframes progressPctFlash {
+  0%   { color: #A78BFA; transform: scale(1.15); }
+  40%  { color: #C4B5FD; }
+  100% { color: inherit; transform: scale(1); }
+}
+
 /* ─── تأثير نبض للمؤشر الأمني ─── */
 .score-pulse {
   animation: scorePulse 2s ease-in-out infinite;
