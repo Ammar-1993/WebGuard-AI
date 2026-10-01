@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { startScan, isAuthenticated } from '@/utils/api';
+import { startScan, isAuthenticated, extractErrorMessage } from '@/utils/api';
 import { useRouter } from 'next/router';
 
 /**
@@ -34,7 +34,7 @@ export default function ScanForm({ onScanStart }) {
       const data = await startScan(url);
       onScanStart(data);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to start scan — make sure the server is running');
+      setError(extractErrorMessage(err, 'Failed to start scan — make sure the server is running'));
     } finally {
       setLoading(false);
     }
@@ -49,7 +49,7 @@ export default function ScanForm({ onScanStart }) {
 
       {error && (
         <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl mb-4 text-sm text-center">
-          {error}
+          {typeof error === 'string' ? error : String(error)}
         </div>
       )}
 

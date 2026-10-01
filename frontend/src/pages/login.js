@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import { useState } from 'react';
 import { useRouter } from 'next/router';
-import { login, register } from '@/utils/api';
+import { login, register, extractErrorMessage } from '@/utils/api';
 
 /**
  * WebGuard AI — Login & Registration Page
@@ -30,7 +30,7 @@ export default function Login() {
       }
       router.push('/');
     } catch (err) {
-      setError(err.response?.data?.detail || 'An error occurred — please try again');
+      setError(extractErrorMessage(err, 'An error occurred — please try again'));
     } finally {
       setLoading(false);
     }
@@ -59,7 +59,7 @@ export default function Login() {
           {/* Error Message */}
           {error && (
             <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl mb-6 text-sm text-center">
-              {error}
+              {typeof error === 'string' ? error : String(error)}
             </div>
           )}
 

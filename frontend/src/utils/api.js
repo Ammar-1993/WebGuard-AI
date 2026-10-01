@@ -125,4 +125,68 @@ export async function getHealthStatus() {
   return response.data;
 }
 
+
+// ═══════════════════════════════════════════
+//  Error Formatting Helper
+// ═══════════════════════════════════════════
+
+/**
+ * Safely extracts a clean string error message from any API error,
+ * including FastAPI/Pydantic validation errors (array/object formats),
+ * ensuring objects are never accidentally passed to React JSX children.
+ */
+export function extractErrorMessage(err, fallback = 'An unexpected error occurred') {
+  if (!err) return fallback;
+  if (typeof err === 'string') return err;
+
+  const data = err.response?.data;
+  if (data) {
+    // 1. Plain string detail
+    if (typeof data.detail === 'string') {
+      return data.detail;
+    }
+    // 2. Array of validation error objects (FastAPI / Pydantic v2 format)
+    if (Array.isArray(data.detail)) {
+      const messages = data.detail.map((item) => {
+        if (typeof item === 'string') return item;
+        if (item && typeof item === 'object') {
+          let msg = item.msg || item.message || '';
+          if (typeof msg === 'string') {
+            msg = msg.replace(/^Value error,\s*/i, '');
+          }
+          const field = Array.isArray(item.loc) && item.loc.length > 0 ? item.loc[item.loc.length - 1] : null;
+          if (field && field !== 'body') {
+            const formattedField = field.charAt(0).toUpperCase() + field.slice(1);
+            return msg ? `${formattedField}: ${msg}` : formattedField;
+          }
+          return msg || JSON.stringify(item);
+        }
+        return String(item);
+      }).filter(Boolean);
+
+      if (messages.length > 0) {
+        return messages.join(' • ');
+      }
+    }
+    // 3. Single object detail
+    if (data.detail && typeof data.detail === 'object') {
+      let msg = data.detail.msg || data.detail.message || data.detail.error;
+      if (typeof msg === 'string') {
+        return msg.replace(/^Value error,\s*/i, '');
+      }
+      return JSON.stringify(data.detail);
+    }
+    // 4. Message or Error field at root of response data
+    if (typeof data.message === 'string') return data.message;
+    if (typeof data.error === 'string') return data.error;
+  }
+
+  if (typeof err.message === 'string') {
+    return err.message;
+  }
+
+  return fallback;
+}
+
 export default api;
+

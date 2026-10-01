@@ -10,7 +10,9 @@ WebGuard AI — Main Backend Application
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -95,6 +97,33 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """
+    تنسيق أخطاء التحقق (Validation Errors) من Pydantic إلى نص واضح ومباشر
+    لتجنب إرجاع كائنات معقدة قد تُربك الواجهة الأمامية.
+    """
+    errors = exc.errors()
+    error_messages = []
+    for err in errors:
+        loc = err.get("loc", [])
+        field = loc[-1] if loc and loc[-1] != "body" else ""
+        msg = err.get("msg", "")
+        if msg.startswith("Value error, "):
+            msg = msg[len("Value error, "):]
+        if field:
+            error_messages.append(f"{str(field).capitalize()}: {msg}")
+        else:
+            error_messages.append(msg)
+
+    clean_message = " • ".join(error_messages) if error_messages else "Invalid request data"
+    return JSONResponse(
+        status_code=422,
+        content={"detail": clean_message},
+    )
+
 
 
 # ═══════════════════════════════════════════
