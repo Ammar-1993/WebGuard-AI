@@ -538,8 +538,6 @@ docker compose logs -f backend-api
 
 ## 👤 Author
 
-## 👤 Author
-
 <div align="center">
   <p>Developed with ❤️ by <b>Eng. Ammar Al-Najjar (م. عمار النجار)</b></p>
 
